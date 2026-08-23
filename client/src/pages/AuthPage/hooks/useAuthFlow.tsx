@@ -59,7 +59,7 @@ export const useAuthFlow = () => {
                 if (data.isNewUser) {
                     setStep('register');
                 } else {
-                    navigate('/char', {replace: true});
+                    navigate('/chat', {replace: true});
                 }
             } catch (err) {
                 setError('Ошибка при проверки кода на сервере!');
@@ -67,7 +67,27 @@ export const useAuthFlow = () => {
         }   
         else if (step === 'register') {
             if (!name.trim()) return setError('Вы не ввели имя!');
-            navigate('/chat', { replace: true });
+
+            try {
+                const response = await fetch("http://localhost:5000/api/auth/register", {
+                    method: "POST",
+                    headers: {'Content-type': 'application/json'},
+                    body: JSON.stringify({phone: fullPhone, name: name.trim()})
+                })
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setError(data.error || "Ошибка при создании пользователя")
+                }
+
+                console.log(data);
+
+                console.log("Пользователь успешно сохранен в бд");
+                navigate('/chat', {replace: true})
+            } catch (err) {
+                setError("Ошибка при создании пользователя");
+            }
         }
   };
 
