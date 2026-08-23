@@ -11,20 +11,58 @@ export const useAuthFlow = () => {
     const [name, setName] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        const fullPhone = `${countryCode}${phoneNumber}`;
+
         if (step === 'phone') {
             if (phoneNumber.length < 10) return setError('Неполный номер телефона');
-            setStep('sms');
+
+            try {
+
+                const response = await fetch('http://localhost:5000/api/auth/send-code', {
+                    method: "POST",
+                    headers: {
+                        'Content-type': 'application/json',
+                    },
+                    body: JSON.stringify({phone: fullPhone})
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    return setError(data.error || 'Ошибка при отправке кода');
+                }
+
+                setStep('sms');
+            } catch (err) {
+                setError('Не удалось связаться с сервером');
+            }
+
+            
         } 
         else if (step === 'sms') {
             if (smsCode.length < 5) return setError('Неверный код смс');
-            
-            const isNewUser = true; // Заглушка для бэкенда
 
-            if (isNewUser) {
-                setStep('register');
-            } else {
-                navigate('/chat', { replace: true });
+            try {
+                const response = await fetch("http://localhost:5000/api/auth/verify-code", {
+                    method: "POST",
+                    headers: {'Content-type': 'application/json'},
+                    body: JSON.stringify({phone: fullPhone, code: smsCode})
+                })
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    return setError(data.error || 'Неверный код!');
+                }
+
+                if (data.isNewUser) {
+                    setStep('register');
+                } else {
+                    navigate('/char', {replace: true});
+                }
+            } catch (err) {
+                setError('Ошибка при проверки кода на сервере!');
             }
         }   
         else if (step === 'register') {
