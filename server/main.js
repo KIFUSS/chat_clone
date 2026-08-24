@@ -19,7 +19,14 @@ const mongoUri = process.env.MONGO_URI
 
 
 mongoose.connect(mongoUri)
-    .then(() => console.log('Успешно подключились к локальной базе данных MOngodb'))
+    .then(async () => {
+        // const allUsers = await User.find({});
+        // console.log('=== СПИСОК ПОЛЬЗОВАТЕЛЕЙ В БД ===');
+        // console.log(allUsers);
+        // console.log('=================================');
+        
+        console.log('Успешно подключились к локальной базе данных MOngodb')
+    })
     .catch((err) => console.error('Ошибка подключения к бд', err))
 
 const smsStorage = {};
@@ -126,17 +133,24 @@ app.post('/api/auth/register', async (req, res) => {
 })
 
 
-app.post('/api/messages/:chatId', async (req, res) => {
+app.get('/api/messages/:chatId', async (req, res) => {
     const { chatId } = req.params;
 
     try {
-        const messages = await Message.find({ chatID })
-            .populate('sender', 'name')
-            .sort({createdAt: 1})
+        const messages = await Message.find({ chatId })
+            
+        if (!messages || messages.length === 0) {
+            return res.status(200).json({success: true, messages: []})
+        }
 
-        return res.status(200).json({success: true, messages})
+        const populatedMessages = await Message.find({chatId})
+            .populate('sender', 'name')
+            .sort({createdAt: 1});
+
+        return res.status(200).json({success: true, messages: populatedMessages})
     } catch (err) {
-        res.status(500).json({error: "Ошибка получения сообщений для этого чата"});
+        console.error('Ошибка внутри Message.find:', err); // Выводим реальную ошибку в консоль сервера!
+        return res.status(500).json({ error: "Ошибка получения сообщений для этого чата" });
     }
 })
 

@@ -82,6 +82,9 @@ export const useAuthFlow = () => {
                     setError(data.error || "Ошибка при создании пользователя")
                 }
 
+                
+
+                console.log(data.token)
                 localStorage.setItem('token', data.token);
 
                 console.log("Пользователь успешно сохранен в бд");
