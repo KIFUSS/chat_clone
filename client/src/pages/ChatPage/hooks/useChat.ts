@@ -1,35 +1,16 @@
 import {useState} from 'react'
-import type { ChatData } from '../components/SideBar/ChatListItem'
+import type { ChatData, MessageData, MessageRepository } from "../types"
+import { MOCK_CHATS, MOCK_MESSAGES_REPOSITORY } from '../mockData';
 
-interface MessageData {
-    id: string;
-    text: string;
-    time: string;
-    isMe: boolean;
-}
 
 export const useChat = () => {
     const [activeChatId, setActiveChatId] = useState<string | null>('1');
 
-    const [chats] = useState<ChatData[]>([
-        { id: '1', name: 'Алексей Программист', avatarText: 'АП', lastMessage: 'Слушай, а база данных MongoDB реально быстро поднялась!', time: '14:15' },
-        { id: '2', name: 'Дизайн Студия', avatarText: 'ДС', lastMessage: 'Макет авторизации клона Telegram утвержден, переходим к чатам.', time: '12:40' },
-        { id: '3', name: 'Мама', avatarText: 'ММ', lastMessage: 'Ты покушал? Код свой весь день пишешь сидишь.', time: 'Вчера' },
-    ])
+    const [inputText, setInputText] = useState<string>('');
 
-    const [messageRepository] = useState<Record<string, MessageData[]>>({
-        '1': [
-            { id: 'm1', text: 'Слушай, а база данных MongoDB реально быстро поднялась после перезагрузки!', time: '14:15', isMe: false },
-            { id: 'm2', text: 'Да, у winget стабильная LTS-версия ставится без проблем. Теперь пишем фронтенд чатов!', time: '14:16', isMe: true },
-        ],
-        '2': [
-            { id: 'm3', text: 'Привет! Мы закончили редизайн главного экрана чатов. Как тебе фиолетовые акценты?', time: '12:35', isMe: false },
-            { id: 'm4', text: 'Не, давайте придерживаться оригинальной темной темы Telegram, цинк и скай-блу.', time: '12:40', isMe: true },
-        ],
-        '3': [
-            { id: 'm5', text: 'Ты покушал? Код свой весь день пишешь сидишь.', time: '11:00', isMe: false },
-        ],
-    })
+    const [chats] = useState<ChatData[]>(MOCK_CHATS)
+
+    const [messageRepository, setMessageRepository] = useState<MessageRepository>(MOCK_MESSAGES_REPOSITORY)
 
     const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
@@ -39,11 +20,32 @@ export const useChat = () => {
         setActiveChatId(id)
     }
 
+    const handleSendMessage = () => {
+        if (!inputText.trim()) return;
+
+        const newMessage: MessageData = {
+            id: `m_$${Date.now()}`,
+            text: inputText.trim(),
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
+            isMe: true
+        }
+
+        setMessageRepository((prev) => ({
+            ...prev,
+            [activeChatId]: [...(prev[activeChatId] || []), newMessage],
+        }))
+
+        setInputText('');
+    }
+
     return {
         chats,
         activeChatId,
         currentChat,
         currentMessages,
+        inputText,
+        setInputText,
+        handleSendMessage,
         handleSelectChat
     }
 }

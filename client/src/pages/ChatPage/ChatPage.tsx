@@ -11,7 +11,7 @@ import {
 
 
 const ChatPage: React.FC = () => {
-    const {chats, activeChatId, currentChat, currentMessages, handleSelectChat} = useChat();
+    const {chats, activeChatId, currentChat, currentMessages, inputText, setInputText, handleSendMessage, handleSelectChat} = useChat();
 
     return (
         <>
@@ -28,7 +28,7 @@ const ChatPage: React.FC = () => {
                     {/* Внедряем декомпозированные блоки окна чата */}
                     <ChatHeader chat={currentChat}/>
                     <MessageArea messages={currentMessages}/>
-                    <MessageInput />
+                    <MessageInput value={inputText} onChange={setInputText} onSend={handleSendMessage}/>
                 </main>
             </div>
         </>
