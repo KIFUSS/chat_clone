@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose';
 import User from './models/User.js'
+import Message from './models/Message.js'
 import jwt from 'jsonwebtoken'
 
 
@@ -121,6 +122,47 @@ app.post('/api/auth/register', async (req, res) => {
         });
     } catch(err) {
         return res.status(500).json({error: 'Не удалось сохранить пользователя в базу данныз'})
+    }
+})
+
+
+app.post('/api/messages/:chatId', async (req, res) => {
+    const { chatId } = req.params;
+
+    try {
+        const messages = await Message.find({ chatID })
+            .populate('sender', 'name')
+            .sort({createdAt: 1})
+
+        return res.status(200).json({success: true, messages})
+    } catch (err) {
+        res.status(500).json({error: "Ошибка получения сообщений для этого чата"});
+    }
+})
+
+app.post('/api/messages', async (req, res) => {
+    const { senderId, chatId, text } = req.body;
+
+    if (!senderId || !chatId || !text.trim()) {
+        res.status(400).json({error: "Все поля обязательны для отправки сообщения "});
+    }
+
+    try {
+        const newMessage = new Message({
+            sender: senderId,
+            chatId,
+            text: text.trim()
+        })
+
+        await newMessage.save();
+        await newMessage.populate('sender', 'name');
+
+        console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
+
+        return res.status(200).json({success: true, message: newMessage});
+
+    } catch (err) {
+        res.status(500).json({error: "Ошибка отправки сообщения"});
     }
 })
 
