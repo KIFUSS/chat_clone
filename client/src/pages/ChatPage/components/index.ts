@@ -1,6 +1,5 @@
 export {SideBarHeader} from './SideBar/SideBarHeader'
 export {ChatList} from './SideBar/ChatList'
-export type {ChatData} from './SideBar/ChatListItem'
 
 
 export {ChatHeader} from './ChatWindow/ChatHeader'

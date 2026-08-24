@@ -1,6 +1,7 @@
 import React from "react";
 
-import { ChatListItem, type ChatData } from "./ChatListItem";
+import { ChatListItem } from "./ChatListItem";
+import type {ChatData} from '../../types'
 
 
 interface ChatListProps {

@@ -1,12 +1,6 @@
 import React from 'react';
+import type { ChatData } from '../../types';
 
-export interface ChatData {
-    id: string;
-    name: string;
-    avatarText: string;
-    lastMessage: string;
-    time: string;
-}
 
 interface ChatListItemProps {
     chat: ChatData;
