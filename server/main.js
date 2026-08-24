@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose';
 import User from './models/User.js'
+import jwt from 'jsonwebtoken'
 
 
 dotenv.config();
@@ -60,11 +61,21 @@ app.post("/api/auth/verify-code", async (req, res) => {
         const existingUser = await User.findOne({phone});
         const isNewUser = !existingUser;
 
-        console.log(`[backend] Код для ${phone} успешно подтверждён!`);
+        console.log(`[backend] Пользователь ${phone} провер. Новый? ${isNewUser}`)
+
+        let token = null;
+        if (existingUser) {
+            token = jwt.sign(
+                { userId: existingUser._id},
+                process.env.JWT_SECRET,
+                {expiresIn: '30d'}
+            );
+        }
 
         return res.status(200).json({
             success: true,
-            isNewUser: isNewUser
+            isNewUser: isNewUser,
+            token: token,
         });
 
     } catch(err) {
@@ -97,9 +108,16 @@ app.post('/api/auth/register', async (req, res) => {
 
         console.log(`[backend] always save new user in bd ${name}, ${phone}`);
 
+        const token = jwt.sign(
+            { userId: newUser._id},
+            process.env.JWT_SECRET,
+            {expiresIn: '30d'}
+        );
+
         return res.status(201).json({
             success: true,
-            message: 'ПОльзователь успешно зарегистрирован'
+            message: 'Пользователь успешно зарегистрирован',
+            token: token,
         });
     } catch(err) {
         return res.status(500).json({error: 'Не удалось сохранить пользователя в базу данныз'})

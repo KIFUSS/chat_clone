@@ -59,6 +59,7 @@ export const useAuthFlow = () => {
                 if (data.isNewUser) {
                     setStep('register');
                 } else {
+                    localStorage.setItem('token', data.token);
                     navigate('/chat', {replace: true});
                 }
             } catch (err) {
@@ -81,7 +82,7 @@ export const useAuthFlow = () => {
                     setError(data.error || "Ошибка при создании пользователя")
                 }
 
-                console.log(data);
+                localStorage.setItem('token', data.token);
 
                 console.log("Пользователь успешно сохранен в бд");
                 navigate('/chat', {replace: true})
