@@ -41,10 +41,9 @@ export const useChat = () => {
   useEffect(() => {
     socketRef.current = io("http://localhost:5000")
 
-    socketRef.current.on("receive_message", (newMessage: any) => {
+    socketRef.current.on("receive_message", (newMessage: MessageData) => {
       if (newMessage.isMe === null) {
-        newMessage.isMe = myUserId === newMessage.sender;
-        delete newMessage.sender;
+        newMessage.isMe = myUserId === newMessage.senderId;
         setMessages((prev) => [...prev, newMessage]);
       }
     })
@@ -89,34 +88,30 @@ export const useChat = () => {
 
   }, [activeChatId, myUserId]);
 
-  // 4. ФУНКЦИЯ ОТПРАВКИ: СОХРАНЯЕМ ТЕКСТ НАМЕРТВО В MONGODB ЧЕРЕЗ EXPRESS API
   const handleSendMessage = async () => {
     if (!inputText.trim() || !myUserId) return;
+    if (!activeChatId || !socketRef.current) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          senderId: myUserId,
-          chatId: activeChatId,
-          text: inputText.trim(),
-        }),
-      });
+      
+      const response = await socketRef.current.timeout(5000).emitWithAck('send_message', {
+        message: inputText.trim(), chatId: activeChatId, sender: myUserId
+      })
 
-      const data = await response.json();
+      if (response && (response.status === 200 || response.success)) {
+        console.log("[front] Сообщение успешно доставлено через сокет", response.message)
 
-      if (response.ok) {
-        // // Добавляем успешно сохраненное сообщение прямо в текущий экран
-        // const clientMessage: MessageData = {
-        //   id: data.message._id,
-        //   text: data.message.text,
-        //   time: new Date(data.message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        //   isMe: true,
-        // };
+        const clientMessage: MessageData = {
+          id: response.message._id,
+          text: response.message.text,
+          time: response.message.time,
+          isMe: true,
+          senderId: response.message.senderId,
+        };
 
-        // setMessages((prev) => [...prev, clientMessage]);
-        setInputText('');
+        setMessages((prev) => [...prev, clientMessage]);
+
+        setInputText('')
       }
     } catch (err) {
       console.error('Ошибка при отправке сообщения', err);

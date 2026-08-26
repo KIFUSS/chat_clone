@@ -11,6 +11,7 @@ export interface MessageData {
     text: string;
     time: string;
     isMe: boolean;
+    senderId: string;
 }
 
 export type MessageRepository = Record<string, MessageData[]>

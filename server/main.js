@@ -169,8 +169,6 @@ app.get('/api/messages/:chatId', async (req, res) => {
 app.post('/api/messages', async (req, res) => {
     const { senderId, chatId, text } = req.body;
 
-    
-
     if (!senderId || !chatId || !text.trim()) {
         res.status(400).json({error: "Все поля обязательны для отправки сообщения "});
     }
@@ -188,13 +186,13 @@ app.post('/api/messages', async (req, res) => {
         console.log(newMessage)
 
 
-        // Отправляет новоу сообщение в сокет комнату по айди чата
+        // Отправляет новое сообщение в сокет комнату по айди чата
         io.to(chatId).emit("receive_message", {
             id: newMessage._id,
             text: newMessage.text,
             time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isMe: null,
-            sender: newMessage.sender._id,
+            senderId: newMessage.sender._id,
         })
 
         console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
@@ -213,6 +211,57 @@ io.on("connection", (socket) => {
     socket.on('join_chat', (chatId) => {
         socket.join(chatId);
         console.log(`Сокет ${socket.id} вошел в комнату ${chatId}`)
+    })
+
+    socket.on('send_message', async (data, callback) => {
+        const {message, chatId, sender} = data;
+
+        if (!message || !chatId || !sender) {
+            callback({
+                    status: 500,
+                    success: false,
+                    error: 'Получены некоректные данные'
+            })
+        }
+
+        try {
+            const newMessage = new Message({
+                sender: sender,
+                chatId: chatId,
+                text: message
+            })
+
+            await newMessage.save();
+            await newMessage.populate('sender', 'name');
+
+            const formattedMessage = {
+                id: newMessage._id,
+                text: newMessage.text,
+                time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isMe: null,
+                senderId: newMessage.sender._id,
+            }
+
+            // Отправляет новое сообщение в сокет комнату по айди чата
+            socket.to(chatId).emit("receive_message", formattedMessage);
+
+            console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
+
+            if (typeof callback === 'function') {
+                callback({status: 200, success: true, message: formattedMessage})
+            }
+            
+        } catch (err) {
+            console.log(err)
+
+            if (typeof callback === 'function') {
+                callback({
+                    status: 500,
+                    success: false,
+                    error: 'Не удалось сохранить сообщение'
+                })
+            }
+        }
     })
 
     socket.on("disconnect", () => {
