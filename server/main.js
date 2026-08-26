@@ -169,6 +169,8 @@ app.get('/api/messages/:chatId', async (req, res) => {
 app.post('/api/messages', async (req, res) => {
     const { senderId, chatId, text } = req.body;
 
+    
+
     if (!senderId || !chatId || !text.trim()) {
         res.status(400).json({error: "Все поля обязательны для отправки сообщения "});
     }
@@ -183,8 +185,17 @@ app.post('/api/messages', async (req, res) => {
         await newMessage.save();
         await newMessage.populate('sender', 'name');
 
+        console.log(newMessage)
+
+
         // Отправляет новоу сообщение в сокет комнату по айди чата
-        io.to(chatId).emit("receive_message", newMessage)
+        io.to(chatId).emit("receive_message", {
+            id: newMessage._id,
+            text: newMessage.text,
+            time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isMe: null,
+            sender: newMessage.sender._id,
+        })
 
         console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
 

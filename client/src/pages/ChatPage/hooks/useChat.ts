@@ -41,15 +41,12 @@ export const useChat = () => {
   useEffect(() => {
     socketRef.current = io("http://localhost:5000")
 
-    socketRef.current.on("receive_message", (newMessage: MessageData) => {
-      const formatterMessage = {
-        id: newMessage._id,
-        text: newMessage.text,
-        time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isMe: newMessage.sender._id === myUserId
+    socketRef.current.on("receive_message", (newMessage: any) => {
+      if (newMessage.isMe === null) {
+        newMessage.isMe = myUserId === newMessage.sender;
+        delete newMessage.sender;
+        setMessages((prev) => [...prev, newMessage]);
       }
-
-      setMessages((prev) => [...prev, formatterMessage])
     })
 
     return () => {
@@ -90,32 +87,6 @@ export const useChat = () => {
     
     fetchMessage()
 
-
-    // const fetchMessages = async () => {
-    //   try {
-
-    //     const response = await fetch(`http://localhost:5000/api/messages/${activeChatId}`);
-    //     const data = await response.json();
-
-    //     console.log(data)
-        
-    //     if (response.ok) {
-    //       // Переводим сообщения из структуры MongoDB под структуру нашего фронтенда
-    //       const formattedMessages: MessageData[] = data.messages.map((msg: any) => ({
-    //         id: msg._id,
-    //         text: msg.text,
-    //         time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    //         // На сервере метод .populate() вернул нам объект автора, сверяем его ID со своим
-    //         isMe: msg.sender._id === myUserId, 
-    //       }));
-    //       setMessages(formattedMessages);
-    //     }
-    //   } catch (err) {
-    //     console.error('Не удалось загрузить сообщения с сервера', err);
-    //   }
-    // };
-
-    // fetchMessages();
   }, [activeChatId, myUserId]);
 
   // 4. ФУНКЦИЯ ОТПРАВКИ: СОХРАНЯЕМ ТЕКСТ НАМЕРТВО В MONGODB ЧЕРЕЗ EXPRESS API
@@ -136,15 +107,15 @@ export const useChat = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Добавляем успешно сохраненное сообщение прямо в текущий экран
-        const clientMessage: MessageData = {
-          id: data.message._id,
-          text: data.message.text,
-          time: new Date(data.message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isMe: true,
-        };
+        // // Добавляем успешно сохраненное сообщение прямо в текущий экран
+        // const clientMessage: MessageData = {
+        //   id: data.message._id,
+        //   text: data.message.text,
+        //   time: new Date(data.message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        //   isMe: true,
+        // };
 
-        setMessages((prev) => [...prev, clientMessage]);
+        // setMessages((prev) => [...prev, clientMessage]);
         setInputText('');
       }
     } catch (err) {
