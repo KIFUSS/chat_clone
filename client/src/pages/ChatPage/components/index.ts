@@ -1,6 +1,5 @@
 export {SideBarHeader} from './SideBar/SideBarHeader'
 export {ChatList} from './SideBar/ChatList'
-export {SideBarMenu} from './SideBar/SideBarMenu'
 
 
 export { ChatHeader } from './ChatWindow/ChatHeader'

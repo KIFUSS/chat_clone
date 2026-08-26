@@ -3,7 +3,6 @@ import { useChat } from './hooks/useChat';
 
 import { 
   SideBarHeader, 
-  SideBarMenu,
   ChatList, 
   ChatHeader, 
   MessageArea, 

@@ -5,6 +5,9 @@ import mongoose from 'mongoose';
 import User from './models/User.js'
 import Message from './models/Message.js'
 import jwt from 'jsonwebtoken'
+import {createServer} from 'http'
+import {Server} from 'socket.io'
+
 
 
 dotenv.config();
@@ -16,6 +19,15 @@ app.use(cors());
 app.use(express.json());
 
 const mongoUri = process.env.MONGO_URI
+
+const httpServer = createServer(app);
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: "http://localhost:5173",
+        method: ['GET', 'POST']
+    }
+})
 
 
 mongoose.connect(mongoUri)
@@ -171,6 +183,9 @@ app.post('/api/messages', async (req, res) => {
         await newMessage.save();
         await newMessage.populate('sender', 'name');
 
+        // Отправляет новоу сообщение в сокет комнату по айди чата
+        io.to(chatId).emit("receive_message", newMessage)
+
         console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
 
         return res.status(200).json({success: true, message: newMessage});
@@ -180,6 +195,20 @@ app.post('/api/messages', async (req, res) => {
     }
 })
 
-app.listen(PORT, () => {
+
+io.on("connection", (socket) => {
+    console.log(`Пользователь подключился к сокету ${socket.id}`);
+
+    socket.on('join_chat', (chatId) => {
+        socket.join(chatId);
+        console.log(`Сокет ${socket.id} вошел в комнату ${chatId}`)
+    })
+
+    socket.on("disconnect", () => {
+        console.log("Пользователь отключился от сокета");
+    })
+})
+
+httpServer.listen(PORT, () => {
     console.log(`Сервер клона телеграма запущен на http://localhost:${PORT}`);
 });

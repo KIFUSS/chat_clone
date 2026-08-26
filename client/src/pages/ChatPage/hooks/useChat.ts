@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { jwtDecode } from 'jwt-decode'; // Наш импортированный декодер токенов
 import { type ChatData, type MessageData } from '../types';
 import { MOCK_CHATS } from '../mockData';
+
+import {io, Socket} from 'socket.io-client'
 
 interface JwtPayload {
   userId: string;
@@ -12,6 +14,9 @@ export const useChat = () => {
   const [inputText, setInputText] = useState<string>('');
   const [chats] = useState<ChatData[]>(MOCK_CHATS);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // socket
+  const socketRef = useRef<Socket | null>(null);
 
   // 1. ТЕПЕРЬ СООБЩЕНИЯ ХРАНЯТСЯ В ЧИСТОМ ДИНАМИЧЕСКОМ МАССИВЕ ДЛЯ ТЕКУЩЕГО ЧАТА
   const [messages, setMessages] = useState<MessageData[]>([]);
@@ -29,19 +34,41 @@ export const useChat = () => {
     }
   }
 
-  console.log(myUserId)
 
   const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
+  // Иниацилизация сокета
+  useEffect(() => {
+    socketRef.current = io("http://localhost:5000")
+
+    socketRef.current.on("receive_message", (newMessage: MessageData) => {
+      const formatterMessage = {
+        id: newMessage._id,
+        text: newMessage.text,
+        time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isMe: newMessage.sender._id === myUserId
+      }
+
+      setMessages((prev) => [...prev, formatterMessage])
+    })
+
+    return () => {
+      socketRef.current?.disconnect();
+    }
+  }, [])
+
   // 3. ЭФФЕКТ: КАЖДЫЙ РАЗ ПРИ СМЕНЕ ЧАТА КАЧАЕМ ПЕРЕПИСКУ ИЗ ЛОКАЛЬНОЙ БАЗЫ ДАННЫХ
   useEffect(() => {
-    const fetchMessages = async () => {
+    // Логика на сокетах 
+
+    if (!activeChatId && !socketRef.current) return;
+
+    const fetchMessage = async () => {
       try {
-        console.log(activeChatId)
+        socketRef.current?.emit('join_chat', activeChatId);
+
         const response = await fetch(`http://localhost:5000/api/messages/${activeChatId}`);
         const data = await response.json();
-
-        console.log(data)
         
         if (response.ok) {
           // Переводим сообщения из структуры MongoDB под структуру нашего фронтенда
@@ -54,12 +81,41 @@ export const useChat = () => {
           }));
           setMessages(formattedMessages);
         }
-      } catch (err) {
-        console.error('Не удалось загрузить сообщения с сервера', err);
-      }
-    };
 
-    fetchMessages();
+      } catch (err) {
+        console.log(err + "Erorrrrrr");
+      }
+    }
+
+    
+    fetchMessage()
+
+
+    // const fetchMessages = async () => {
+    //   try {
+
+    //     const response = await fetch(`http://localhost:5000/api/messages/${activeChatId}`);
+    //     const data = await response.json();
+
+    //     console.log(data)
+        
+    //     if (response.ok) {
+    //       // Переводим сообщения из структуры MongoDB под структуру нашего фронтенда
+    //       const formattedMessages: MessageData[] = data.messages.map((msg: any) => ({
+    //         id: msg._id,
+    //         text: msg.text,
+    //         time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    //         // На сервере метод .populate() вернул нам объект автора, сверяем его ID со своим
+    //         isMe: msg.sender._id === myUserId, 
+    //       }));
+    //       setMessages(formattedMessages);
+    //     }
+    //   } catch (err) {
+    //     console.error('Не удалось загрузить сообщения с сервера', err);
+    //   }
+    // };
+
+    // fetchMessages();
   }, [activeChatId, myUserId]);
 
   // 4. ФУНКЦИЯ ОТПРАВКИ: СОХРАНЯЕМ ТЕКСТ НАМЕРТВО В MONGODB ЧЕРЕЗ EXPRESS API
