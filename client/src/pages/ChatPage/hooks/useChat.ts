@@ -8,7 +8,7 @@ import {io, Socket} from 'socket.io-client'
 export const useChat = () => {
   const [activeChatId, setActiveChatId] = useState<string>('1');
   const [inputText, setInputText] = useState<string>('');
-  const [chats] = useState<ChatData[]>(MOCK_CHATS);
+  const [chats, setChats] = useState<ChatData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const socketRef = useRef<Socket | null>(null);
   const [messages, setMessages] = useState<MessageData[]>([]);
@@ -34,6 +34,39 @@ export const useChat = () => {
   useEffect(() => {
     socketRef.current = io("http://localhost:5000")
 
+    const loadUsersChats = async () => {
+      if (!myUserId || !socketRef.current) return;
+
+      try {
+        const response = await socketRef.current.timeout(5000).emitWithAck('get_user_chats', myUserId);
+
+        if (response && response.success) {
+          const formatterChats: ChatData[] = response.chats.map((chat: any) => {
+            const partner = chat.participants.find((p: any) => p._id !== myUserId);
+            return {
+              id: chat._id,
+              name: partner?.name || 'Удаленный аккаунт',
+              avatarText: partner?.avatar || '',
+              lastMessage: chat.lastMessage?.text || 'Нет сообщений',
+              time: '14:15',
+            };
+          })
+
+          setChats(formatterChats)
+
+          if (formatterChats.length > 0 && !activeChatId) {
+            setActiveChatId(formatterChats[0].id);
+          }
+
+
+        }
+        //{ id: '1', name: 'Алексей Программист', avatarText: 'АП', lastMessage: 'Слушай, а база данных MongoDB реально быстро поднялась!', time: '14:15' },
+        
+      } catch (err) {
+        console.error("Не удалось загрузить чаты по сокету:", err);
+      }
+    }
+
     socketRef.current.on("receive_message", (newMessage: MessageData) => {
       if (newMessage.isMe === null) {
         newMessage.isMe = myUserId === newMessage.senderId;
@@ -41,10 +74,46 @@ export const useChat = () => {
       }
     })
 
+    loadUsersChats();
+
     return () => {
       socketRef.current?.disconnect();
     }
   }, [myUserId])
+
+   const handleCreateChat = async (partnerId: string) => {
+    if (!socketRef.current || !myUserId) return;
+
+    try {
+      const response = await socketRef.current.timeout(5000).emitWithAck('create_chat', {
+        myUserId,
+        partnerId
+      });
+
+      if (response && response.success) {
+        const chat = response.chat;
+        const partner = chat.participants.find((p: any) => p._id !== myUserId);
+        
+        const newChatData: ChatData = {
+          id: chat._id,
+          name: partner?.name || 'Чат',
+          avatarText: partner?.avatar || '',
+          lastMessage: chat.lastMessage?.text || 'Нет сообщений',
+          time: '12:12'
+        };
+
+        // Если такого чата еще нет в стейте, добавляем его вверх списка
+        if (!chats.some(c => c.id === chat._id)) {
+          setChats((prev) => [newChatData, ...prev]);
+        }
+        
+        // Сразу переключаемся на этот чат
+        setActiveChatId(chat._id);
+      }
+    } catch (err) {
+      console.error("Ошибка при создании чата:", err);
+    }
+  };
 
   useEffect(() => {
     if (!activeChatId || !socketRef.current) return;
@@ -62,6 +131,8 @@ export const useChat = () => {
             senderId: msg.sender._id,
           }));
           setMessages(formattedMessages);
+
+          
         }
       } catch (err) {
         console.log("Произошла ошибка получения сообщений с сервера: " + err);
@@ -121,5 +192,6 @@ export const useChat = () => {
     setSearchQuery,
     handleSendMessage,
     handleSelectChat,
+    handleCreateChat,
   };
 };

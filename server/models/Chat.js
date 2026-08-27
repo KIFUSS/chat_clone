@@ -10,6 +10,11 @@ const chatSchema = new mongoose.Schema({
     ],
     lastMessage: {
         type: mongoose.Schema.Types.ObjectId,
-        
-    }
+        ref: 'Message',
+        required: false
+    },
+    timespamps: true
 })
+
+const Chat = mongoose.model('Chat', chatSchema);
+export default Chat;

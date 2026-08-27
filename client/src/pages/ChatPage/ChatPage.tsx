@@ -21,7 +21,8 @@ const ChatPage: React.FC = () => {
         searchQuery, 
         setSearchQuery, 
         handleSendMessage, 
-        handleSelectChat} = useChat();
+        handleSelectChat,
+        handleCreateChat} = useChat();
 
     const [menuActive, setMenuActive] = useState<boolean>(false);
 

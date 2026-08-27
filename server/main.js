@@ -32,10 +32,12 @@ const io = new Server(httpServer, {
 
 mongoose.connect(mongoUri)
     .then(async () => {
-        // const allUsers = await User.find({});
+        // const allUsers = await Message.find({});
         // console.log('=== СПИСОК ПОЛЬЗОВАТЕЛЕЙ В БД ===');
         // console.log(allUsers);
         // console.log('=================================');
+
+        
         
         console.log('Успешно подключились к локальной базе данных MOngodb')
     })
@@ -174,6 +176,65 @@ app.post('/api/messages', async (req, res) => {
 io.on("connection", (socket) => {
     console.log(`Пользователь подключился к сокету ${socket.id}`);
 
+        // 1. ПОЛУЧЕНИЕ ВСЕХ ЧАТОВ ПОЛЬЗОВАТЕЛЯ
+    socket.on('get_user_chats', async (userId, callback) => {
+        try {
+            if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+                return callback({ success: false, error: 'Некорректный userId' });
+            }
+
+            // Находим все чаты, где пользователь является участником
+            const userChats = await Chat.find({ participants: userId })
+                .populate('participants', 'name') // Достаем из коллекции User имя и аватар
+                .populate('lastMessage')                // Достаем текст последнего сообщения
+                .sort({ updatedAt: -1 });               // Свежие чаты перемещаем наверх
+
+            console.log(userChats)
+
+            return callback({ success: true, chats: userChats });
+        } catch (err) {
+            console.error(err);
+            return callback({ success: false, error: err.message });
+        }
+    });
+
+    // 2. СОЗДАНИЕ НОВОГО ЧАТА (ИЛИ ВОЗВРАТ СУЩЕСТВУЮЩЕГО)
+    socket.on('create_chat', async ({ myUserId, partnerId }, callback) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(myUserId) || !mongoose.Types.ObjectId.isValid(partnerId)) {
+                return callback({ success: false, error: 'Некорректные ID участников' });
+            }
+
+            // Проверяем, нет ли уже чата между этими двумя пользователями
+            let chat = await Chat.findOne({
+                participants: { $all: [myUserId, partnerId] }
+            }).populate('participants', 'name').populate('lastMessage');
+
+            // Если чат уже есть, просто возвращаем его фронтенду
+            if (chat) {
+                return callback({ success: true, chat });
+            }
+
+            // Если чата нет — создаем в базе данных новый документ
+            const newChat = new Chat({
+                participants: [myUserId, partnerId]
+            });
+            await newChat.save();
+
+            // Делаем populate для только что созданного чата перед отправкой
+            chat = await Chat.findById(newChat._id).populate('participants', 'name');
+
+            // (Опционально) Оповещаем второго пользователя через сокеты, если он в сети
+            // socket.to(partnerId).emit('chat_created', chat);
+
+            return callback({ success: true, chat });
+        } catch (err) {
+            console.error(err);
+            return callback({ success: false, error: err.message });
+        }
+    });
+
+
     socket.on('join_chat', async (chatId, callback) => {
         if (!chatId) {
             callback({
@@ -186,36 +247,61 @@ io.on("connection", (socket) => {
         socket.join(chatId);
 
         try {
-            const messages = await Message.find({chatId});
+        // Делаем ОДИН запрос сразу со связями и сортировкой
+        // Передаем в populate просто строку 'sender', чтобы получить объект пользователя целиком (включая _id)
+        const populatedMessages = await Message.find({ chatId })
+            .populate('sender') 
+            .sort({ createdAt: 1 });
 
-            if (!messages || messages.length === 0) {
-                callback({
-                    status: 200,
-                    success: true,
-                    messages: [],
-                })
-            }
+        //console.log(populatedMessages); // для отладки
 
-            const populatedMessages = await Message.find({chatId})
-                .populate('sender', 'name')
-                .sort({createdAt: 1});
-
-            console.log(populatedMessages)
-
-            callback({
-                status: 200,
-                success: true,
-                messages: populatedMessages,
-            })
-
+        // Отправляем ОДИН ответ, независимо от того, пустой массив или нет
+        return callback({
+            status: 200,
+            success: true,
+            messages: populatedMessages,
+        });
 
         } catch (err) {
-            callback({
+            console.error(err);
+            return callback({
                 status: 500,
                 success: false,
-                error: `Произошла ошибка при получении сообщений выбранного чата: ${err}`
-            })
+                error: `Произошла ошибка при получении сообщений выбранного чата: ${err.message}`
+            });
         }
+
+        // try {
+        //     const messages = await Message.find({chatId});
+
+        //     if (!messages || messages.length === 0) {
+        //         callback({
+        //             status: 200,
+        //             success: true,
+        //             messages: [],
+        //         })
+        //     }
+
+        //     const populatedMessages = await Message.find({chatId})
+        //         .populate('sender', 'name')
+        //         .sort({createdAt: 1});
+
+        //     console.log(populatedMessages)
+
+        //     callback({
+        //         status: 200,
+        //         success: true,
+        //         messages: populatedMessages,
+        //     })
+
+
+        // } catch (err) {
+        //     callback({
+        //         status: 500,
+        //         success: false,
+        //         error: `Произошла ошибка при получении сообщений выбранного чата: ${err}`
+        //     })
+        // }
 
 
 

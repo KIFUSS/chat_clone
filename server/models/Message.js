@@ -7,7 +7,8 @@ const messageSchema = new mongoose.Schema({
         required: true,
     },
     chatId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Chat',
         required: true,
         index: true,
     },
@@ -15,11 +16,9 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
     }
+}, {
+    timestamps: true
 })
 
 const Message = mongoose.model('Message', messageSchema);
