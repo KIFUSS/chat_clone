@@ -167,49 +167,58 @@ app.get('/api/messages/:chatId', async (req, res) => {
 })
 
 app.post('/api/messages', async (req, res) => {
-    const { senderId, chatId, text } = req.body;
-
-    if (!senderId || !chatId || !text.trim()) {
-        res.status(400).json({error: "Все поля обязательны для отправки сообщения "});
-    }
-
-    try {
-        const newMessage = new Message({
-            sender: senderId,
-            chatId,
-            text: text.trim()
-        })
-
-        await newMessage.save();
-        await newMessage.populate('sender', 'name');
-
-        console.log(newMessage)
-
-
-        // Отправляет новое сообщение в сокет комнату по айди чата
-        io.to(chatId).emit("receive_message", {
-            id: newMessage._id,
-            text: newMessage.text,
-            time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isMe: null,
-            senderId: newMessage.sender._id,
-        })
-
-        console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
-
-        return res.status(200).json({success: true, message: newMessage});
-
-    } catch (err) {
-        res.status(500).json({error: "Ошибка отправки сообщения"});
-    }
+    
 })
 
 
 io.on("connection", (socket) => {
     console.log(`Пользователь подключился к сокету ${socket.id}`);
 
-    socket.on('join_chat', (chatId) => {
+    socket.on('join_chat', async (chatId, callback) => {
+        if (!chatId) {
+            callback({
+                status: 500,
+                success: false,
+                error: "Некоректные переданные данные"
+            })
+        }
+
         socket.join(chatId);
+
+        try {
+            const messages = await Message.find({chatId});
+
+            if (!messages || messages.length === 0) {
+                callback({
+                    status: 200,
+                    success: true,
+                    messages: [],
+                })
+            }
+
+            const populatedMessages = await Message.find({chatId})
+                .populate('sender', 'name')
+                .sort({createdAt: 1});
+
+            console.log(populatedMessages)
+
+            callback({
+                status: 200,
+                success: true,
+                messages: populatedMessages,
+            })
+
+
+        } catch (err) {
+            callback({
+                status: 500,
+                success: false,
+                error: `Произошла ошибка при получении сообщений выбранного чата: ${err}`
+            })
+        }
+
+
+
         console.log(`Сокет ${socket.id} вошел в комнату ${chatId}`)
     })
 
@@ -233,6 +242,7 @@ io.on("connection", (socket) => {
 
             await newMessage.save();
             await newMessage.populate('sender', 'name');
+
 
             const formattedMessage = {
                 id: newMessage._id,

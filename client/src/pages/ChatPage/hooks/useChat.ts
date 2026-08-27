@@ -1,43 +1,36 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode'; // Наш импортированный декодер токенов
-import { type ChatData, type MessageData } from '../types';
+import { type BackendMessage, type ChatData, type MessageData, type ResponseFetchMessage, type JwtPayload} from '../types';
 import { MOCK_CHATS } from '../mockData';
-
 import {io, Socket} from 'socket.io-client'
 
-interface JwtPayload {
-  userId: string;
-}
 
 export const useChat = () => {
   const [activeChatId, setActiveChatId] = useState<string>('1');
   const [inputText, setInputText] = useState<string>('');
   const [chats] = useState<ChatData[]>(MOCK_CHATS);
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // socket
   const socketRef = useRef<Socket | null>(null);
-
-  // 1. ТЕПЕРЬ СООБЩЕНИЯ ХРАНЯТСЯ В ЧИСТОМ ДИНАМИЧЕСКОМ МАССИВЕ ДЛЯ ТЕКУЩЕГО ЧАТА
   const [messages, setMessages] = useState<MessageData[]>([]);
 
-  // 2. ДОСТАЕМ И ДЕКОДИРУЕМ JWT-ТОКЕН
-  const token = localStorage.getItem('token') || '';
-  let myUserId = '';
+  const myUserId = useMemo(() => {
+    const token = localStorage.getItem('token') || '';
 
-  if (token) {
+    if (!token) return ''
+
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      myUserId = decoded.userId; // Достали твой реальный ID пользователя из MongoDB
+      return decoded.userId; 
     } catch (e) {
       console.error('Ошибка декодирования JWT токена', e);
+      return '';
     }
-  }
+  }, [])
 
+  
 
   const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
-  // Иниацилизация сокета
   useEffect(() => {
     socketRef.current = io("http://localhost:5000")
 
@@ -51,35 +44,27 @@ export const useChat = () => {
     return () => {
       socketRef.current?.disconnect();
     }
-  }, [])
+  }, [myUserId])
 
-  // 3. ЭФФЕКТ: КАЖДЫЙ РАЗ ПРИ СМЕНЕ ЧАТА КАЧАЕМ ПЕРЕПИСКУ ИЗ ЛОКАЛЬНОЙ БАЗЫ ДАННЫХ
   useEffect(() => {
-    // Логика на сокетах 
-
-    if (!activeChatId && !socketRef.current) return;
+    if (!activeChatId || !socketRef.current) return;
 
     const fetchMessage = async () => {
       try {
-        socketRef.current?.emit('join_chat', activeChatId);
+        const response: ResponseFetchMessage = await socketRef.current?.timeout(5000).emitWithAck('join_chat', activeChatId);
 
-        const response = await fetch(`http://localhost:5000/api/messages/${activeChatId}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-          // Переводим сообщения из структуры MongoDB под структуру нашего фронтенда
-          const formattedMessages: MessageData[] = data.messages.map((msg: any) => ({
+        if (response && (response.status === 200 && response.success)) {
+          const formattedMessages: MessageData[] = response.messages.map((msg: BackendMessage) => ({
             id: msg._id,
             text: msg.text,
             time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            // На сервере метод .populate() вернул нам объект автора, сверяем его ID со своим
             isMe: msg.sender._id === myUserId, 
+            senderId: msg.sender._id,
           }));
           setMessages(formattedMessages);
         }
-
       } catch (err) {
-        console.log(err + "Erorrrrrr");
+        console.log("Произошла ошибка получения сообщений с сервера: " + err);
       }
     }
 
@@ -93,7 +78,6 @@ export const useChat = () => {
     if (!activeChatId || !socketRef.current) return;
 
     try {
-      
       const response = await socketRef.current.timeout(5000).emitWithAck('send_message', {
         message: inputText.trim(), chatId: activeChatId, sender: myUserId
       })
