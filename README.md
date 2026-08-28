@@ -25,14 +25,20 @@
 ## 📂 Структура проекта
 
 ```text
-server/
-├── config/             # Настройки базы данных и CORS
-├── controllers/        # Логика HTTP-запросов (авторизация, генерация кодов)
-├── routes/             # HTTP роуты (/api/auth)
-├── socket/             # Обработчики событий Socket.io (поиск, сообщения)
-├── models/             # Схемы Mongoose (User, Message)
-├── app.js              # Настройка Express и мидлваров
-└── server.js           # Запуск HTTP и WebSocket серверов
+chat_clone/
+├── client/             # Фронтенд-приложение (Vite + React + TS)
+│   └── src/
+│       ├── components/ # Визуальные компоненты интерфейса
+│       ├── pages/      # Страницы (Авторизация, Чат)
+│       └── hooks/      # Кастомные хуки с логикой (useSearch, useChat)
+└── server/             # Бэкенд-приложение (Node.js + Express + Socket.io)
+    ├── config/         # Настройки базы данных и CORS
+    ├── controllers/    # Логика HTTP-запросов (авторизация, коды)
+    ├── routes/         # HTTP маршруты (/api/auth)
+    ├── socket/         # Логика веб-сокетов (поиск юзеров, отправка сообщений)
+    ├── models/         # Схемы таблиц базы данных Mongoose (User, Message)
+    ├── app.js          # Сборка и настройка Express
+    └── server.js       # Точка запуска всего бэкенда и сокетов
 ```
 
 ---
