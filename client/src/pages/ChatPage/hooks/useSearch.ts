@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { ChatData } from "../types";
+import { useEffect, useState } from "react";
+import type { ChatData, UserDataBackend } from "../types";
 import type { Socket } from "socket.io-client";
 
 interface useSearchProps {
@@ -10,7 +10,7 @@ interface useSearchProps {
 
 interface useSearchReturn {
     filteredChats: ChatData[];
-    globalSearchResult: ChatData[];
+    globalSearchResult: UserDataBackend[];
 }
 
 
@@ -21,58 +21,49 @@ const checkIsPhone = (phone: string) => {
 }
 
 export const useSearch = ({ inputSearchVal, chats, socket }: useSearchProps): useSearchReturn => {
-    const [globalSearchResult, setGlobalSearchResult] = useState<ChatData[]>([]);
+    const [globalSearchResult, setGlobalSearchResult] = useState<UserDataBackend[]>([]);
+    const [filteredChats, setFilteredChats] = useState<ChatData[]>(chats)
 
-    if (inputSearchVal.trim() !== '') {
+    useEffect(() => {
+        if (inputSearchVal.trim() === "") {
+            setFilteredChats(chats);
+            setGlobalSearchResult([]);
+            return;
+        }
+
         if (!checkIsPhone(inputSearchVal)) {
-            console.log('В строке не телефон')
-            const filteredChats = chats.filter((chat) =>
+            const filtered: ChatData[] = chats.filter((chat) =>
                 chat.name.toLowerCase().includes(inputSearchVal.toLowerCase())
             );
 
-            return {
-                filteredChats,
-                globalSearchResult,
-            }
-        } else {
-            if (socket !== null) {
-                const globalSearchUser = async () => {
-                    try {
-                        const response = await socket.timeout(5000).emitWithAck('global_search_user_by_phone', inputSearchVal);
-
-                        console.log('Ежи ищем по номеру')
-                        console.log(response)
-
-                        if (response && (response.status === 200 || response.success)) {
-                            console.log('уе успех')
-                            setGlobalSearchResult(response.globalSearchResult)
-                        }
-
-
-                    } catch (err) {
-                        console.log("Ошибка глобального поиска : " + err);
-                    }
-                }
-
-                globalSearchUser();
-
-                return {
-                    filteredChats: [],
-                    globalSearchResult: globalSearchResult
-                };
-            }
+            setFilteredChats(filtered);
+            setGlobalSearchResult([]);
+            return;
         }
-    }
 
-    
+        if (socket !== null) {
+            const globalSearchUser = async () => {
+                try {
+                    const response = await socket.timeout(5000).emitWithAck('global_search_user_by_phone', inputSearchVal);
+
+                    console.log('Ежи ищем по номеру')
+
+                    if (response && (response.status === 200 || response.success)) {
+                        console.log('уе успех')
+                        setGlobalSearchResult(response.globalSearchResult)
+                    }
+                } catch (err) {
+                    console.log("Ошибка глобального поиска : " + err);
+                }
+            }
+
+            globalSearchUser();
+        }
+    }, [inputSearchVal, chats, socket])
 
     return {
-        filteredChats: chats,
-        globalSearchResult: []
+        filteredChats,
+        globalSearchResult,
     };
 
-    
-
-    
-    
 }

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode'; // Наш импортированный декодер токенов
 import { type BackendMessage, type ChatData, type MessageData, type ResponseFetchMessage, type JwtPayload} from '../types';
 import {io, Socket} from 'socket.io-client'
-import { useSearch } from './useSearch';
 
 
 export const useChat = () => {

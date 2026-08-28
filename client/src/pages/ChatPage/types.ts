@@ -14,6 +14,14 @@ export interface MessageData {
     senderId: string;
 }
 
+export interface UserDataBackend {
+    _id: string;
+    phone: string;
+    name: string;
+    createdAt: string;
+    __v: number;
+}
+
 export type MessageRepository = Record<string, MessageData[]>
 
 

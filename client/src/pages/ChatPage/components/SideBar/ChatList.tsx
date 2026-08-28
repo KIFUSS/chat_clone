@@ -19,14 +19,15 @@ export const ChatList: React.FC<ChatListProps> = ({chats, activeChatId, onSelect
 
     const {filteredChats, globalSearchResult} = useSearch({inputSearchVal: searchQuery, chats, socket});
 
-    console.log("filteredChat", filteredChats);
-    console.log('globalSearch', globalSearchResult)
+    console.log(globalSearchResult)
+
 
     return (
         <div className="overflow-y-auto flex-1 p-2 space-y-1">
             {filteredChats.length === 0 ? 
                 globalSearchResult.map((user) => (
                     <UserListItem 
+                        key={user._id}
                         name={user.name}
                         // isActive={chat.id === activeChatId}
                         // onClick={() => onSelectChat(chat.id)}
