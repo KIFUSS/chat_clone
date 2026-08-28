@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import mongoose from 'mongoose';
 import User from './models/User.js'
 import Message from './models/Message.js'
+import Chat from './models/Chat.js'
 import jwt from 'jsonwebtoken'
 import {createServer} from 'http'
 import {Server} from 'socket.io'
@@ -32,10 +33,10 @@ const io = new Server(httpServer, {
 
 mongoose.connect(mongoUri)
     .then(async () => {
-        // const allUsers = await Message.find({});
-        // console.log('=== СПИСОК ПОЛЬЗОВАТЕЛЕЙ В БД ===');
-        // console.log(allUsers);
-        // console.log('=================================');
+        const allUsers = await User.find({});
+        console.log('=== СПИСОК ПОЛЬЗОВАТЕЛЕЙ В БД ===');
+        console.log(allUsers);
+        console.log('=================================');
 
         
         
@@ -173,8 +174,36 @@ app.post('/api/messages', async (req, res) => {
 })
 
 
+const checkIsPhone = (phone) => {
+    if (phone.trim() === '') return false;
+    const cleanedPhone = phone.replace("/\D/g", '');
+    return cleanedPhone.length === 11 && (cleanedPhone.startsWith('7') || cleanedPhone.startsWith('8'));
+} 
+
+
 io.on("connection", (socket) => {
     console.log(`Пользователь подключился к сокету ${socket.id}`);
+
+
+    socket.on("global_search_user_by_phone", async (phone, callback) => {
+        try {
+            if (phone.trim() === '' || !checkIsPhone(phone)) {
+                return callback({
+                    status: 500,
+                    success: false,
+                    error: 'Некоректное значение поиска',
+                })
+            }
+
+            phone = "+" + phone;
+
+            const users = await User.find({phone})
+
+            return callback({status: 200, success: true, globalSearchResult: users});
+        } catch (err) {
+            return callback({status: 500, success: false, error: 'Ошибка глобального поиска'})
+        }
+    })
 
         // 1. ПОЛУЧЕНИЕ ВСЕХ ЧАТОВ ПОЛЬЗОВАТЕЛЯ
     socket.on('get_user_chats', async (userId, callback) => {
@@ -189,7 +218,6 @@ io.on("connection", (socket) => {
                 .populate('lastMessage')                // Достаем текст последнего сообщения
                 .sort({ updatedAt: -1 });               // Свежие чаты перемещаем наверх
 
-            console.log(userChats)
 
             return callback({ success: true, chats: userChats });
         } catch (err) {
@@ -236,31 +264,32 @@ io.on("connection", (socket) => {
 
 
     socket.on('join_chat', async (chatId, callback) => {
-        if (!chatId) {
-            callback({
-                status: 500,
+        if (!chatId || !mongoose.Types.ObjectId.isValid(chatId)) {
+            // Обязательно пишем return, чтобы функция СРАЗУ завершилась и код не шёл ниже
+            return callback({
+                status: 400,
                 success: false,
-                error: "Некоректные переданные данные"
-            })
+                error: "Некорректный формат идентификатора чата (chatId)"
+            });
         }
 
         socket.join(chatId);
 
         try {
-        // Делаем ОДИН запрос сразу со связями и сортировкой
-        // Передаем в populate просто строку 'sender', чтобы получить объект пользователя целиком (включая _id)
-        const populatedMessages = await Message.find({ chatId })
-            .populate('sender') 
-            .sort({ createdAt: 1 });
+            // Делаем ОДИН запрос сразу со связями и сортировкой
+            // Передаем в populate просто строку 'sender', чтобы получить объект пользователя целиком (включая _id)
+            const populatedMessages = await Message.find({ chatId })
+                .populate('sender') 
+                .sort({ createdAt: 1 });
 
-        //console.log(populatedMessages); // для отладки
+            //console.log(populatedMessages); // для отладки
 
-        // Отправляем ОДИН ответ, независимо от того, пустой массив или нет
-        return callback({
-            status: 200,
-            success: true,
-            messages: populatedMessages,
-        });
+            // Отправляем ОДИН ответ, независимо от того, пустой массив или нет
+            return callback({
+                status: 200,
+                success: true,
+                messages: populatedMessages,
+            });
 
         } catch (err) {
             console.error(err);
@@ -270,40 +299,6 @@ io.on("connection", (socket) => {
                 error: `Произошла ошибка при получении сообщений выбранного чата: ${err.message}`
             });
         }
-
-        // try {
-        //     const messages = await Message.find({chatId});
-
-        //     if (!messages || messages.length === 0) {
-        //         callback({
-        //             status: 200,
-        //             success: true,
-        //             messages: [],
-        //         })
-        //     }
-
-        //     const populatedMessages = await Message.find({chatId})
-        //         .populate('sender', 'name')
-        //         .sort({createdAt: 1});
-
-        //     console.log(populatedMessages)
-
-        //     callback({
-        //         status: 200,
-        //         success: true,
-        //         messages: populatedMessages,
-        //     })
-
-
-        // } catch (err) {
-        //     callback({
-        //         status: 500,
-        //         success: false,
-        //         error: `Произошла ошибка при получении сообщений выбранного чата: ${err}`
-        //     })
-        // }
-
-
 
         console.log(`Сокет ${socket.id} вошел в комнату ${chatId}`)
     })

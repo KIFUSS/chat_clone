@@ -22,7 +22,9 @@ const ChatPage: React.FC = () => {
         setSearchQuery, 
         handleSendMessage, 
         handleSelectChat,
-        handleCreateChat} = useChat();
+        handleCreateChat,
+        socket,
+    } = useChat();
 
     const [menuActive, setMenuActive] = useState<boolean>(false);
 
@@ -39,6 +41,8 @@ const ChatPage: React.FC = () => {
                         chats={chats} 
                         activeChatId={activeChatId} 
                         onSelectChat={handleSelectChat} 
+                        searchQuery={searchQuery}
+                        socket={socket}
                     />
                 </aside>
                 <main className="flex-1 h-full bg-zinc-950 flex flex-col">

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode'; // Наш импортированный декодер токенов
 import { type BackendMessage, type ChatData, type MessageData, type ResponseFetchMessage, type JwtPayload} from '../types';
-import { MOCK_CHATS } from '../mockData';
 import {io, Socket} from 'socket.io-client'
+import { useSearch } from './useSearch';
 
 
 export const useChat = () => {
-  const [activeChatId, setActiveChatId] = useState<string>('1');
+  const [activeChatId, setActiveChatId] = useState<string>('');
   const [inputText, setInputText] = useState<string>('');
   const [chats, setChats] = useState<ChatData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -59,9 +59,7 @@ export const useChat = () => {
           }
 
 
-        }
-        //{ id: '1', name: 'Алексей Программист', avatarText: 'АП', lastMessage: 'Слушай, а база данных MongoDB реально быстро поднялась!', time: '14:15' },
-        
+        }        
       } catch (err) {
         console.error("Не удалось загрузить чаты по сокету:", err);
       }
@@ -116,7 +114,7 @@ export const useChat = () => {
   };
 
   useEffect(() => {
-    if (!activeChatId || !socketRef.current) return;
+     if (!activeChatId || activeChatId === '1' || !socketRef.current) return;
 
     const fetchMessage = async () => {
       try {
@@ -177,12 +175,10 @@ export const useChat = () => {
     setActiveChatId(id);
   };
 
-  const filteredChats = chats.filter((chat) =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
 
   return {
-    chats: filteredChats,
+    chats: chats,
     activeChatId,
     currentChat,
     currentMessages: messages, // Передаем наш чистый массив сообщений из базы данных
@@ -193,5 +189,6 @@ export const useChat = () => {
     handleSendMessage,
     handleSelectChat,
     handleCreateChat,
+    socket: socketRef.current,
   };
 };
