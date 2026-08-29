@@ -1,7 +1,8 @@
-import { registerCreateChatHandler } from "./createChatHandler";
-import { registerJoinChatHandler } from "./joinChatHandler";
-import { registerSearchHandler } from "./searchHandler";
-import { registerSendMessageHandler } from "./sendMessageHandler";
+import { registerCreateChatHandler } from "./createChatHandler.js";
+import { registerJoinChatHandler } from "./joinChatHandler.js";
+import { registerSearchHandler } from "./searchHandler.js";
+import { registerSendMessageHandler } from "./sendMessageHandler.js";
+import { registerGetUserChatsHandler } from "./getUserChatsHandler.js";
 
 export const initSocketManager = (io) => {
     io.on('connection', (socket) => {

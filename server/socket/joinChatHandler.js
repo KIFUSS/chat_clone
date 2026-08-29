@@ -1,4 +1,5 @@
-import Message from "../models/Message";
+import Message from "../models/Message.js";
+import mongoose from "mongoose";
 
 export const registerJoinChatHandler = (io, socket) => {
     socket.on('join_chat', async (chatId, callback) => {

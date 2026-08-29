@@ -1,4 +1,5 @@
-import User from "../models/User";
+import User from "../models/User.js";
+import { checkIsPhone } from "../utils.js";
 
 export const registerSearchHandler = (io, socket) => {
     socket.on("global_search_user_by_phone", async (phone, callback) => {
@@ -17,7 +18,7 @@ export const registerSearchHandler = (io, socket) => {
 
             return callback({status: 200, success: true, globalSearchResult: users});
         } catch (err) {
-            return callback({status: 500, success: false, error: 'Ошибка глобального поиска'})
+            return callback({status: 500, success: false, error: `Ошибка глобального поиска: ${err}` })
         }
     })
 }

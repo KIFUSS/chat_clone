@@ -78,39 +78,39 @@ export const useChat = () => {
     }
   }, [myUserId])
 
-   const handleCreateChat = async (partnerId: string) => {
-    if (!socketRef.current || !myUserId) return;
+  //  const handleCreateChat = async (partnerId: string) => {
+  //   if (!socketRef.current || !myUserId) return;
 
-    try {
-      const response = await socketRef.current.timeout(5000).emitWithAck('create_chat', {
-        myUserId,
-        partnerId
-      });
+  //   try {
+  //     const response = await socketRef.current.timeout(5000).emitWithAck('create_chat', {
+  //       myUserId,
+  //       partnerId
+  //     });
 
-      if (response && response.success) {
-        const chat = response.chat;
-        const partner = chat.participants.find((p: any) => p._id !== myUserId);
+  //     if (response && response.success) {
+  //       const chat = response.chat;
+  //       const partner = chat.participants.find((p: any) => p._id !== myUserId);
         
-        const newChatData: ChatData = {
-          id: chat._id,
-          name: partner?.name || 'Чат',
-          avatarText: partner?.avatar || '',
-          lastMessage: chat.lastMessage?.text || 'Нет сообщений',
-          time: '12:12'
-        };
+  //       const newChatData: ChatData = {
+  //         id: chat._id,
+  //         name: partner?.name || 'Чат',
+  //         avatarText: partner?.avatar || '',
+  //         lastMessage: chat.lastMessage?.text || 'Нет сообщений',
+  //         time: '12:12'
+  //       };
 
-        // Если такого чата еще нет в стейте, добавляем его вверх списка
-        if (!chats.some(c => c.id === chat._id)) {
-          setChats((prev) => [newChatData, ...prev]);
-        }
+  //       // Если такого чата еще нет в стейте, добавляем его вверх списка
+  //       if (!chats.some(c => c.id === chat._id)) {
+  //         setChats((prev) => [newChatData, ...prev]);
+  //       }
         
-        // Сразу переключаемся на этот чат
-        setActiveChatId(chat._id);
-      }
-    } catch (err) {
-      console.error("Ошибка при создании чата:", err);
-    }
-  };
+  //       // Сразу переключаемся на этот чат
+  //       setActiveChatId(chat._id);
+  //     }
+  //   } catch (err) {
+  //     console.error("Ошибка при создании чата:", err);
+  //   }
+  // };
 
   useEffect(() => {
      if (!activeChatId || activeChatId === '1' || !socketRef.current) return;
@@ -187,7 +187,7 @@ export const useChat = () => {
     setSearchQuery,
     handleSendMessage,
     handleSelectChat,
-    handleCreateChat,
+    // handleCreateChat,
     socket: socketRef.current,
   };
 };

@@ -1,4 +1,5 @@
-import Chat from "../models/Chat";
+import Chat from "../models/Chat.js";
+import mongoose from "mongoose";
 
 export const registerGetUserChatsHandler = (io, socket) => {
     socket.on('get_user_chats', async (userId, callback) => {

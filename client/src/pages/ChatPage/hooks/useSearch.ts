@@ -1,24 +1,11 @@
 import { useEffect, useState } from "react";
 import type { ChatData, UserDataBackend } from "../types";
 import type { Socket } from "socket.io-client";
-
-interface useSearchProps {
-    inputSearchVal: string;
-    chats: ChatData[];
-    socket: Socket | null;
-}
-
-interface useSearchReturn {
-    filteredChats: ChatData[];
-    globalSearchResult: UserDataBackend[];
-}
+import { checkIsPhone } from "@/utils";
+import type { useSearchProps, useSearchReturn } from "../types";
 
 
-const checkIsPhone = (phone: string) => {
-    if (phone.trim() === '') return false;
-    const cleanedPhone = phone.replace("/\D/g", '');
-    return cleanedPhone.length === 11 && (cleanedPhone.startsWith('7') || cleanedPhone.startsWith('8'));
-}
+
 
 export const useSearch = ({ inputSearchVal, chats, socket }: useSearchProps): useSearchReturn => {
     const [globalSearchResult, setGlobalSearchResult] = useState<UserDataBackend[]>([]);
@@ -41,24 +28,29 @@ export const useSearch = ({ inputSearchVal, chats, socket }: useSearchProps): us
             return;
         }
 
-        if (socket !== null) {
-            const globalSearchUser = async () => {
-                try {
-                    const response = await socket.timeout(5000).emitWithAck('global_search_user_by_phone', inputSearchVal);
+        const delayDebounceFn = setTimeout(() => {
+            if (socket !== null) {
+                const globalSearchUser = async () => {
+                    try {
+                        const response = await socket.timeout(5000).emitWithAck('global_search_user_by_phone', inputSearchVal);
 
-                    console.log('Ежи ищем по номеру')
+                        console.log('Ежи ищем по номеру')
+                        console.log(response)
 
-                    if (response && (response.status === 200 || response.success)) {
-                        console.log('уе успех')
-                        setGlobalSearchResult(response.globalSearchResult)
+                        if (response && (response.status === 200 || response.success)) {
+                            console.log('уе успех')
+                            setGlobalSearchResult(response.globalSearchResult)
+                        }
+                    } catch (err) {
+                        console.log("Ошибка глобального поиска : " + err);
                     }
-                } catch (err) {
-                    console.log("Ошибка глобального поиска : " + err);
                 }
-            }
 
-            globalSearchUser();
-        }
+                globalSearchUser();
+            }
+        }, 400);
+
+        return () => clearTimeout(delayDebounceFn);
     }, [inputSearchVal, chats, socket])
 
     return {

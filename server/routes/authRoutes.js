@@ -1,7 +1,7 @@
-import {Route} from 'express'
-import { register, sendCode, verifyCode } from '../controllers/authController';
+import express from 'express'
+import { register, sendCode, verifyCode } from '../controllers/authController.js';
 
-const router = Route();
+const router = express.Router();
 
 
 router.post("/send-code", sendCode);

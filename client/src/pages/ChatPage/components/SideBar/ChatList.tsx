@@ -5,6 +5,7 @@ import type {ChatData} from '../../types'
 import { useSearch } from "../../hooks/useSearch";
 import type { Socket } from "socket.io-client";
 import { UserListItem } from "./UserListItem";
+import { useCreateChat } from "../../hooks/useCreateChat";
 
 
 interface ChatListProps {
@@ -18,8 +19,7 @@ interface ChatListProps {
 export const ChatList: React.FC<ChatListProps> = ({chats, activeChatId, onSelectChat, searchQuery, socket}) => {
 
     const {filteredChats, globalSearchResult} = useSearch({inputSearchVal: searchQuery, chats, socket});
-
-    console.log(globalSearchResult)
+    const {createChatHandler, isLoading, error} = useCreateChat({socket})
 
 
     return (
@@ -29,8 +29,8 @@ export const ChatList: React.FC<ChatListProps> = ({chats, activeChatId, onSelect
                     <UserListItem 
                         key={user._id}
                         name={user.name}
-                        // isActive={chat.id === activeChatId}
-                        // onClick={() => onSelectChat(chat.id)}
+                        startChat={createChatHandler}
+                        userData={user}
                     />
                 ))
             : 

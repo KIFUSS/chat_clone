@@ -1,4 +1,4 @@
-import Message from "../models/Message";
+import Message from "../models/Message.js";
 
 export const registerSendMessageHandler = (io, socket) => {
     socket.on('send_message', async (data, callback) => {

@@ -1,3 +1,6 @@
+import { Socket } from "socket.io-client";
+
+
 export interface ChatData {
     id: string;
     name: string;
@@ -40,4 +43,31 @@ export interface BackendMessage {
 
 export interface JwtPayload {
   userId: string;
+}
+
+
+export interface useCreateChatProps {
+    socket: Socket | null;
+}
+
+export interface useCreateChatReturn {
+    createChatHandler: createChatHandler;
+    isLoading: boolean;
+    error: string | null;
+}
+
+
+export type createChatHandler = (myUserId: string, partnerId: string) => void;
+
+
+
+export interface useSearchProps {
+    inputSearchVal: string;
+    chats: ChatData[];
+    socket: Socket | null;
+}
+
+export interface useSearchReturn {
+    filteredChats: ChatData[];
+    globalSearchResult: UserDataBackend[];
 }

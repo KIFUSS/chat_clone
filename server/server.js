@@ -1,8 +1,8 @@
 import {createServer} from 'http';
 import {Server} from 'socket.io';
 import dotenv from 'dotenv'
-import { connectDB } from './config/db';
-import { initSocketManager } from './socket';
+import { connectDB } from './config/db.js';
+import { initSocketManager } from './socket/index.js';
 import app from './app.js';
 
 dotenv.config();
@@ -18,7 +18,7 @@ const io = new Server(httpServer, {
 })
 
 connectDB();
-initSocketManager();
+initSocketManager(io);
 
 httpServer.listen(PORT, () => {
     console.log(`Сервер клона телеграма запущен на http://localhost:${PORT}`);

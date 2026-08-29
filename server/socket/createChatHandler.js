@@ -1,4 +1,5 @@
-import Chat from "../models/Chat";
+import Chat from "../models/Chat.js";
+import mongoose from "mongoose";
 
 export const registerCreateChatHandler = (io, socket) => {
     socket.on('create_chat', async ({ myUserId, partnerId }, callback) => {
@@ -14,8 +15,10 @@ export const registerCreateChatHandler = (io, socket) => {
 
             // Если чат уже есть, просто возвращаем его фронтенду
             if (chat) {
-                return callback({ success: true, chat });
+                console.log('BACKEND ЧАТ УЖЕ ЕСТЬ МЕЖДУ НИКИ')
+                return callback({ success: false, error: 'Чат между ними уже существует' });
             }
+
 
             // Если чата нет — создаем в базе данных новый документ
             const newChat = new Chat({

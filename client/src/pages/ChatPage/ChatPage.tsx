@@ -22,7 +22,7 @@ const ChatPage: React.FC = () => {
         setSearchQuery, 
         handleSendMessage, 
         handleSelectChat,
-        handleCreateChat,
+        // handleCreateChat,
         socket,
     } = useChat();
 
