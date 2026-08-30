@@ -31,7 +31,9 @@ export const useChat = () => {
   const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
   useEffect(() => {
-    socketRef.current = io("http://localhost:5000")
+    socketRef.current = io("http://localhost:5000", {
+      withCredentials: true,
+    })
 
     const loadUsersChats = async () => {
       if (!myUserId || !socketRef.current) return;

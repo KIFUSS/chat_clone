@@ -2,8 +2,9 @@ import Chat from "../models/Chat.js";
 import mongoose from "mongoose";
 
 export const registerCreateChatHandler = (io, socket) => {
-    socket.on('create_chat', async ({ myUserId, partnerId }, callback) => {
+    socket.on('create_chat', async ({partnerId}, callback) => {
         try {
+
             if (!mongoose.Types.ObjectId.isValid(myUserId) || !mongoose.Types.ObjectId.isValid(partnerId)) {
                 return callback({ success: false, error: 'Некорректные ID участников' });
             }

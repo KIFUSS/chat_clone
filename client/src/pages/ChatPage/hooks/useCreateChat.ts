@@ -7,10 +7,10 @@ export const useCreateChat = ({socket}: useCreateChatProps): useCreateChatReturn
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error,  setError]    = useState<string | null>(null);
 
-    const createChatHandler: createChatHandler = async (myUserId, partnerId) => {
-        if (!isValidObjectBDId(myUserId) || !isValidObjectBDId(partnerId)) {
-            console.log("Некорректный ID участников")
-            setError('Некорректный ID пользователя');
+    const createChatHandler: createChatHandler = async (partnerId) => {
+        if (!isValidObjectBDId(partnerId)) {
+            console.log("Некорректный ID партнера")
+            setError('Некорректный ID партнера, для создания чата');
             return;
         } 
 
@@ -18,7 +18,7 @@ export const useCreateChat = ({socket}: useCreateChatProps): useCreateChatReturn
         setError(null);
 
         try {
-            const response = await socket?.timeout(5000).emitWithAck('create_chat', {myUserId, partnerId});
+            const response = await socket?.timeout(5000).emitWithAck('create_chat', partnerId);
             console.log(response)
 
             if (response && response.success) {

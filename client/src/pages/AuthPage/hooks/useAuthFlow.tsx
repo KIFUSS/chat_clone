@@ -1,8 +1,11 @@
+import { useAuth } from '@/context/AuthContext';
 import {useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export const useAuthFlow = () => {
     const navigate = useNavigate();
+
+    const {checkAuth} = useAuth();
 
     const [countryCode, setCountryCode] = useState<string>('+7');
     const [phoneNumber, setPhoneNumber] = useState<string>('');
@@ -70,10 +73,12 @@ export const useAuthFlow = () => {
             if (!name.trim()) return setError('Вы не ввели имя!');
 
             try {
+                console.log('Начала регистрации юзера')
                 const response = await fetch("http://localhost:5000/api/auth/register", {
                     method: "POST",
                     headers: {'Content-type': 'application/json'},
-                    body: JSON.stringify({phone: fullPhone, name: name.trim()})
+                    body: JSON.stringify({phone: fullPhone, name: name.trim()}),
+                    credentials: 'include',
                 })
 
                 const data = await response.json();
@@ -84,10 +89,10 @@ export const useAuthFlow = () => {
 
                 
 
-                console.log(data.token)
-                localStorage.setItem('token', data.token);
 
                 console.log("Пользователь успешно сохранен в бд");
+
+                checkAuth();
                 navigate('/chat', {replace: true})
             } catch (err) {
                 setError("Ошибка при создании пользователя");

@@ -92,12 +92,37 @@ export const register = async (req, res) => {
             {expiresIn: '30d'}
         );
 
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        })
+
         return res.status(201).json({
             success: true,
             message: 'Пользователь успешно зарегистрирован',
-            token: token,
         });
     } catch(err) {
         return res.status(500).json({error: 'Не удалось сохранить пользователя в базу данныз'})
+    }
+}
+
+
+export const checkAuth = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({message: 'Пользователь не найден'});
+        }
+
+        return res.status(200).json({
+            success: true,
+            user: user,
+        });
+    } catch(err) {
+        console.log("Ошибка в роуте /me");
+        return res.status(500).json({message: 'Ошибка веривикации юзера на сервере'});
     }
 }
