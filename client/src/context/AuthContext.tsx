@@ -20,12 +20,15 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
                 credentials: 'include'  
             })
 
-            console.log("Проверка авторизации в контексте")
-            console.log(response)
+            console.log("Проверка авторизации в контексте...")
 
             if (response.ok) {
+                console.log('Авторизован')
                 const data = await response.json();
                 setMyUserId(data.user.id || data.user._id);
+            } else {
+                console.log('Не авторизован')
+                setMyUserId(null)
             }
         } catch (err) {
             console.log('Ошибка проверки авторизации', err);
@@ -35,7 +38,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
     }
     
     useEffect(() => {
-        
         checkAuth();
     }, [])
 

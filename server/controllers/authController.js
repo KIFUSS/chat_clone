@@ -3,6 +3,28 @@ import jwt from 'jsonwebtoken'
 
 const smsStorage = {};
 
+
+const sendCookieToken = (token, res, statusCode, data) => {
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+    })
+
+    return res.status(statusCode).json(data);
+}
+
+const createToken = (userId) => {
+    if (!userId) return;
+
+    return jwt.sign(
+        { userId: userId},
+        process.env.JWT_SECRET,
+        {expiresIn: '30d'}
+    )
+}
+
 export const sendCode = async (req, res) => {
     const {phone} = req.body;
 
@@ -31,36 +53,39 @@ export const verifyCode = async (req, res) => {
     }
 
     const validCode = smsStorage[phone];
+
     if (!validCode || validCode !== code) {
         return res.status(400).json({error: 'Неверный СМС - код'});
-    }
+    } else {
+        delete smsStorage[phone];
 
-    delete smsStorage[phone];
+        try {
+            console.log("[backend] Код верный проверяем существование юзера")
+            const existingUser = await User.findOne({phone});
 
-    try {
-        const existingUser = await User.findOne({phone});
-        const isNewUser = !existingUser;
+            if (!existingUser) {
+                return res.status(200).json({success: true, isNewUser: true, token: ''});
+            }
+            
+            const isNewUser = !existingUser;
+            const token = createToken(existingUser._id);
 
-        console.log(`[backend] Пользователь ${phone} провер. Новый? ${isNewUser}`)
+            console.log(`[backend] Создали token: ${token}`)
 
-        let token = null;
-        if (existingUser) {
-            token = jwt.sign(
-                { userId: existingUser._id},
-                process.env.JWT_SECRET,
-                {expiresIn: '30d'}
-            );
+            console.log(`[backend] Пользователь ${phone} провер. Новый? ${isNewUser}`)
+
+            return sendCookieToken(token, res, 200, {
+                success: true,
+                isNewUser: isNewUser,
+                token: token,
+            })
+
+        } catch(err) {
+            return res.status(500).json({error: `Ошибка при поиске пользователя в бд: ${err}`});
         }
-
-        return res.status(200).json({
-            success: true,
-            isNewUser: isNewUser,
-            token: token,
-        });
-
-    } catch(err) {
-        return res.status(500).json({error: 'Ошибка при поиске пользователя в бд'});
     }
+
+   
 }
 
 export const register = async (req, res) => {
@@ -84,25 +109,15 @@ export const register = async (req, res) => {
 
         await newUser.save();
 
-        console.log(`[backend] always save new user in bd ${name}, ${phone}`);
+        console.log(`[backend] Создали нового пользователя: ${name}, ${phone}`);
 
-        const token = jwt.sign(
-            { userId: newUser._id},
-            process.env.JWT_SECRET,
-            {expiresIn: '30d'}
-        );
+        const token = createToken(newUser._id);
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            maxAge: 30 * 24 * 60 * 60 * 1000
-        })
-
-        return res.status(201).json({
+        return sendCookieToken(token, res, 200, {
             success: true,
             message: 'Пользователь успешно зарегистрирован',
-        });
+            user: newUser,
+        })
     } catch(err) {
         return res.status(500).json({error: 'Не удалось сохранить пользователя в базу данныз'})
     }

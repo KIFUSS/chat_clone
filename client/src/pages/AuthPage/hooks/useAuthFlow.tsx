@@ -50,10 +50,14 @@ export const useAuthFlow = () => {
                 const response = await fetch("http://localhost:5000/api/auth/verify-code", {
                     method: "POST",
                     headers: {'Content-type': 'application/json'},
-                    body: JSON.stringify({phone: fullPhone, code: smsCode})
+                    body: JSON.stringify({phone: fullPhone, code: smsCode}),
+                    credentials: 'include',
                 })
 
                 const data = await response.json();
+
+                console.log("[FRONTEND] Что приходит с сервера после верификации по коду:");
+                console.log(data)
 
                 if (!response.ok) {
                     return setError(data.error || 'Неверный код!');
@@ -62,7 +66,8 @@ export const useAuthFlow = () => {
                 if (data.isNewUser) {
                     setStep('register');
                 } else {
-                    localStorage.setItem('token', data.token);
+                    console.log('[frontend] Этот юзер уже есть, перекидываем на chat')
+                    await checkAuth();
                     navigate('/chat', {replace: true});
                 }
             } catch (err) {
@@ -87,12 +92,9 @@ export const useAuthFlow = () => {
                     setError(data.error || "Ошибка при создании пользователя")
                 }
 
-                
-
-
                 console.log("Пользователь успешно сохранен в бд");
 
-                checkAuth();
+                await checkAuth();
                 navigate('/chat', {replace: true})
             } catch (err) {
                 setError("Ошибка при создании пользователя");
