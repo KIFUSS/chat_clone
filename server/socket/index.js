@@ -4,11 +4,17 @@ import { registerSearchHandler } from "./searchHandler.js";
 import { registerSendMessageHandler } from "./sendMessageHandler.js";
 import { registerGetUserChatsHandler } from "./getUserChatsHandler.js";
 import jwt from 'jsonwebtoken'
+import cookie from 'cookie';
 
 export const initSocketManager = (io) => {
     io.use((socket, next) => {
         try {
-            const cookiesHeader = socket.handsnake.headers.cookie;
+            console.log(123)
+            console.log(socket.handsnake)
+            const cookiesHeader = socket?.handsnake?.headers?.cookie;
+
+
+            
 
             if (!cookiesHeader) {
                 return next(new Error('Authentication error: No cookies found'));
@@ -33,10 +39,11 @@ export const initSocketManager = (io) => {
 
     io.on('connection', (socket) => {
         console.log(`[backend] Client connected: ${socket.user.id}`);
-        console.log(socket);
+        console.log('[backend] Переданый токен с фронта который в сокете:');
+        console.log(socket.user);
 
-        registerSearchHandler(io, socket);
         registerGetUserChatsHandler(io, socket);
+        registerSearchHandler(io, socket);
         registerCreateChatHandler(io, socket);
         registerJoinChatHandler(io, socket);       
         registerSendMessageHandler(io, socket); 

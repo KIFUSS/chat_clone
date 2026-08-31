@@ -12,38 +12,51 @@ export const useChat = () => {
   const socketRef = useRef<Socket | null>(null);
   const [messages, setMessages] = useState<MessageData[]>([]);
 
-  const myUserId = useMemo(() => {
-    const token = localStorage.getItem('token') || '';
+  // const myUserId = useMemo(() => {
+  //   const token = localStorage.getItem('token') || '';
 
-    if (!token) return ''
+  //   if (!token) return ''
 
-    try {
-      const decoded = jwtDecode<JwtPayload>(token);
-      return decoded.userId; 
-    } catch (e) {
-      console.error('Ошибка декодирования JWT токена', e);
-      return '';
-    }
-  }, [])
+  //   try {
+  //     const decoded = jwtDecode<JwtPayload>(token);
+  //     return decoded.userId; 
+  //   } catch (e) {
+  //     console.error('Ошибка декодирования JWT токена', e);
+  //     return '';
+  //   }
+  // }, [])
 
   
 
   const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
   useEffect(() => {
+    console.log('[frontend] Подключаемся к сокету...');
     socketRef.current = io("http://localhost:5000", {
       withCredentials: true,
     })
+    
 
     const loadUsersChats = async () => {
-      if (!myUserId || !socketRef.current) return;
+      console.log('[frontend] Начали запрос чатов пользователя');
+
+      if (!socketRef.current || !socketRef.current.connected) return;
 
       try {
-        const response = await socketRef.current.timeout(5000).emitWithAck('get_user_chats', myUserId);
+        console.log("[frontend] Статус подключения сокета:", socketRef.current?.connected);
+        const response = await socketRef.current.timeout(5000).emitWithAck('get_user_chats');
+        console.log('[frontend] Ответ сервера на запрос чатов пользователя: ');
+        console.log(response);
+
+
+        if (response && !response.success) {
+          console.log(`[frontend] Ошибка при запросе чатов: ${response.error}`)
+        }
 
         if (response && response.success) {
           const formatterChats: ChatData[] = response.chats.map((chat: any) => {
-            const partner = chat.participants.find((p: any) => p._id !== myUserId);
+            const partner = chat.participants.find((p: any) => p._id !== response.myUserId);
+
             return {
               id: chat._id,
               name: partner?.name || 'Удаленный аккаунт',
@@ -66,19 +79,25 @@ export const useChat = () => {
       }
     }
 
-    socketRef.current.on("receive_message", (newMessage: MessageData) => {
-      if (newMessage.isMe === null) {
-        newMessage.isMe = myUserId === newMessage.senderId;
-        setMessages((prev) => [...prev, newMessage]);
-      }
+    socketRef.current.on('connect', () => {
+      loadUsersChats();
     })
 
-    loadUsersChats();
+    socketRef.current.on('connect_error', (err) => {
+        console.error('❌ Ошибка подключения к сокету:', err.message);
+    });
+
+    socketRef.current.on("receive_message", (newMessage: MessageData) => {
+        console.log('[frontend] Начали прослушку новых смс');
+        setMessages((prev) => [...prev, newMessage]);
+    })
+
+    
 
     return () => {
       socketRef.current?.disconnect();
     }
-  }, [myUserId])
+  }, [])
 
   //  const handleCreateChat = async (partnerId: string) => {
   //   if (!socketRef.current || !myUserId) return;
@@ -114,19 +133,21 @@ export const useChat = () => {
   //   }
   // };
 
+  // получение сообщений
   useEffect(() => {
      if (!activeChatId || activeChatId === '1' || !socketRef.current) return;
 
     const fetchMessage = async () => {
       try {
         const response: ResponseFetchMessage = await socketRef.current?.timeout(5000).emitWithAck('join_chat', activeChatId);
-
+        
         if (response && (response.status === 200 && response.success)) {
+          
           const formattedMessages: MessageData[] = response.messages.map((msg: BackendMessage) => ({
             id: msg._id,
             text: msg.text,
             time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isMe: msg.sender._id === myUserId, 
+            isMe: msg.sender._id === response.myId, 
             senderId: msg.sender._id,
           }));
           setMessages(formattedMessages);
@@ -141,15 +162,16 @@ export const useChat = () => {
     
     fetchMessage()
 
-  }, [activeChatId, myUserId]);
+  }, [activeChatId]);
 
+  // отправка сообщений
   const handleSendMessage = async () => {
-    if (!inputText.trim() || !myUserId) return;
+    if (!inputText.trim()) return;
     if (!activeChatId || !socketRef.current) return;
 
     try {
       const response = await socketRef.current.timeout(5000).emitWithAck('send_message', {
-        message: inputText.trim(), chatId: activeChatId, sender: myUserId
+        message: inputText.trim(), chatId: activeChatId
       })
 
       if (response && (response.status === 200 || response.success)) {

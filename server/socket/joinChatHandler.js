@@ -13,6 +13,7 @@ export const registerJoinChatHandler = (io, socket) => {
         }
 
         socket.join(chatId);
+        console.log(`Сокет ${socket.id} вошел в комнату ${chatId}`)
 
         try {
             // Делаем ОДИН запрос сразу со связями и сортировкой
@@ -28,6 +29,7 @@ export const registerJoinChatHandler = (io, socket) => {
                 status: 200,
                 success: true,
                 messages: populatedMessages,
+                myId: socket.user.id,
             });
 
         } catch (err) {
@@ -39,6 +41,6 @@ export const registerJoinChatHandler = (io, socket) => {
             });
         }
 
-        console.log(`Сокет ${socket.id} вошел в комнату ${chatId}`)
+
     })
 }

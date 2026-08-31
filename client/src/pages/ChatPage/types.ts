@@ -29,8 +29,10 @@ export type MessageRepository = Record<string, MessageData[]>
 
 
 export type ResponseFetchMessage = 
-      | {status: number; success: true; messages: BackendMessage[]}
+      | {status: number; success: true; messages: BackendMessage[]; myId: string}
       | {status: number; success: false; error: string}
+
+
 
 export interface BackendMessage {
     _id: string;

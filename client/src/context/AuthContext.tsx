@@ -21,6 +21,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
             })
 
             console.log("Проверка авторизации в контексте...")
+            console.log(response)
 
             if (response.ok) {
                 console.log('Авторизован')

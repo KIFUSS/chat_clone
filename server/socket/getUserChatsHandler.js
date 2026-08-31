@@ -2,9 +2,17 @@ import Chat from "../models/Chat.js";
 import mongoose from "mongoose";
 
 export const registerGetUserChatsHandler = (io, socket) => {
-    socket.on('get_user_chats', async (userId, callback) => {
+    socket.on('get_user_chats', async (callback) => {
+        console.log('салам')
         try {
-            if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            console.log('[backend] Начинаем код для отправки чатов юзера')
+            if (!socket.user.id) {
+                return callback({success: false, error: "Ошибка на сервере, отсутствует переданный токен"});
+            }
+
+            const userId = socket.user.id;
+
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
                 return callback({ success: false, error: 'Некорректный userId' });
             }
 
@@ -14,7 +22,7 @@ export const registerGetUserChatsHandler = (io, socket) => {
                 .populate('lastMessage')                // Достаем текст последнего сообщения
                 .sort({ updatedAt: -1 });               // Свежие чаты перемещаем наверх
 
-            return callback({ success: true, chats: userChats });
+            return callback({ success: true, chats: userChats, myUserId: userId });
         } catch (err) {
             console.error(err);
             return callback({ success: false, error: err.message });

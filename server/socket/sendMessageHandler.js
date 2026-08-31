@@ -2,9 +2,17 @@ import Message from "../models/Message.js";
 
 export const registerSendMessageHandler = (io, socket) => {
     socket.on('send_message', async (data, callback) => {
-        const {message, chatId, sender} = data;
+        const {message, chatId} = data;
 
-        if (!message || !chatId || !sender) {
+        if (!socket.user.id) {
+            callback({
+                    status: 500,
+                    success: false,
+                    error: 'Сервер не нашел ваш айди в запросе',
+            })
+        }
+
+        if (!message || !chatId) {
             callback({
                     status: 500,
                     success: false,
@@ -14,7 +22,7 @@ export const registerSendMessageHandler = (io, socket) => {
 
         try {
             const newMessage = new Message({
-                sender: sender,
+                sender: socket.user.id,
                 chatId: chatId,
                 text: message
             })
@@ -27,7 +35,7 @@ export const registerSendMessageHandler = (io, socket) => {
                 id: newMessage._id,
                 text: newMessage.text,
                 time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isMe: null,
+                isMe: false,
                 senderId: newMessage.sender._id,
             }
 
