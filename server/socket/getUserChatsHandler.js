@@ -6,11 +6,11 @@ export const registerGetUserChatsHandler = (io, socket) => {
         console.log('салам')
         try {
             console.log('[backend] Начинаем код для отправки чатов юзера')
-            if (!socket.user.id) {
+            if (!socket.user) {
                 return callback({success: false, error: "Ошибка на сервере, отсутствует переданный токен"});
             }
 
-            const userId = socket.user.id;
+            const userId = socket.user;
 
             if (!mongoose.Types.ObjectId.isValid(userId)) {
                 return callback({ success: false, error: 'Некорректный userId' });

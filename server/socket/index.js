@@ -4,43 +4,33 @@ import { registerSearchHandler } from "./searchHandler.js";
 import { registerSendMessageHandler } from "./sendMessageHandler.js";
 import { registerGetUserChatsHandler } from "./getUserChatsHandler.js";
 import jwt from 'jsonwebtoken'
-import cookie from 'cookie';
+import * as cookie from 'cookie';
+
+
 
 export const initSocketManager = (io) => {
     io.use((socket, next) => {
         try {
-            console.log(123)
-            console.log(socket.handsnake)
-            const cookiesHeader = socket?.handsnake?.headers?.cookie;
-
-
             
-
-            if (!cookiesHeader) {
-                return next(new Error('Authentication error: No cookies found'));
-            }
-
-            const parsedCookies = cookie.parse(cookiesHeader);
-            const token = parsedCookies.token;
+            const token = socket?.handshake?.auth?.token
 
             if (!token) {
-                return next(new Error('Authentication error: Token missing'));
+                return next(new Error('Authentication error: Token not found'));
             }
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.user = decoded;
+            socket.user = decoded.userId;
 
             next();
 
         } catch (err) {
-            return next(new Error("Authentication error: Invalid Token"));
+            return next(new Error(`Authentication error: Invalid Token: ${err}`));
         }
     })
 
     io.on('connection', (socket) => {
-        console.log(`[backend] Client connected: ${socket.user.id}`);
-        console.log('[backend] Переданый токен с фронта который в сокете:');
-        console.log(socket.user);
+        console.log(socket.user)
+        console.log(`[backend] Client connected: ${socket.user}`);
 
         registerGetUserChatsHandler(io, socket);
         registerSearchHandler(io, socket);

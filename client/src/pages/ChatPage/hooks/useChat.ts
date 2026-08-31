@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode'; // Наш импортированный декодер токенов
 import { type BackendMessage, type ChatData, type MessageData, type ResponseFetchMessage, type JwtPayload} from '../types';
 import {io, Socket} from 'socket.io-client'
+import { useAuth } from '@/context/AuthContext';
 
 
 export const useChat = () => {
@@ -11,6 +12,9 @@ export const useChat = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const socketRef = useRef<Socket | null>(null);
   const [messages, setMessages] = useState<MessageData[]>([]);
+  
+  // get token for context
+  const {token} = useAuth();
 
   // const myUserId = useMemo(() => {
   //   const token = localStorage.getItem('token') || '';
@@ -32,8 +36,12 @@ export const useChat = () => {
 
   useEffect(() => {
     console.log('[frontend] Подключаемся к сокету...');
+    console.log(token)
     socketRef.current = io("http://localhost:5000", {
       withCredentials: true,
+      auth: {
+        token: token
+      }
     })
     
 

@@ -7,7 +7,7 @@ const smsStorage = {};
 const sendCookieToken = (token, res, statusCode, data) => {
     res.cookie('token', token, {
         httpOnly: true,
-        secure: false,
+        secure: true,
         sameSite: 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000
     })
@@ -99,7 +99,7 @@ export const register = async (req, res) => {
         const existingUser = await User.findOne({phone});
 
         if (existingUser) {
-            res.status(400).json({error: 'Этот номер уже зарегистрирован'});
+            return res.status(400).json({error: 'Этот номер уже зарегистрирован'});
         }
 
         const newUser = new User({
@@ -117,6 +117,7 @@ export const register = async (req, res) => {
             success: true,
             message: 'Пользователь успешно зарегистрирован',
             user: newUser,
+            token: token,
         })
     } catch(err) {
         return res.status(500).json({error: 'Не удалось сохранить пользователя в базу данныз'})
@@ -135,6 +136,7 @@ export const checkAuth = async (req, res) => {
         return res.status(200).json({
             success: true,
             user: user,
+            token: req.cookies.token,
         });
     } catch(err) {
         console.log("Ошибка в роуте /me");

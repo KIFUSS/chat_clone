@@ -13,19 +13,14 @@ interface UserListItemProps {
 export const UserListItem: React.FC<UserListItemProps> = ({name, startChat, userData}) => {
 
     const handlerStartChat = () => {
-        const myUserId = getMyUserId();
-        const partnerId = userData._id;
-        
-        if (!myUserId) {
-            console.log('Ошибка с айди текущего юзера');
+        const partnerId: string = userData._id;
+
+        if (!partnerId) {
+            console.log('Ошибка, некорректные ID пользователей, невозможно создать чат');
+            return;
         }
 
-        if (!myUserId || !partnerId) {
-            console.log('Ошибка, некорректные ID пользователей, не возможно создать чат');
-            return
-        }
-
-        startChat(myUserId, partnerId)
+        startChat(partnerId)
         
     }
 

@@ -4,7 +4,8 @@ import React, {createContext, useContext, useEffect, useState } from 'react'
 interface AuthContextType {
     myUserId: string | null;
     isLoading: boolean;
-    checkAuth: () => Promise<void>
+    checkAuth: () => Promise<void>,
+    token: string | null,
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -12,6 +13,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) => {
     const [myUserId, setMyUserId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [token, setToken] = useState<string | null>(null);
 
     const checkAuth = async () => {
         try {
@@ -27,9 +29,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
                 console.log('Авторизован')
                 const data = await response.json();
                 setMyUserId(data.user.id || data.user._id);
+                setToken(data.token);
             } else {
                 console.log('Не авторизован')
                 setMyUserId(null)
+                setToken(null)
             }
         } catch (err) {
             console.log('Ошибка проверки авторизации', err);
@@ -43,7 +47,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
     }, [])
 
     return (
-        <AuthContext.Provider value={{myUserId, isLoading, checkAuth}}>
+        <AuthContext.Provider value={{myUserId, isLoading, checkAuth, token}}>
             {children}
         </AuthContext.Provider>
     )

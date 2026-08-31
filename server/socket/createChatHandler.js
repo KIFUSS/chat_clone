@@ -4,6 +4,10 @@ import mongoose from "mongoose";
 export const registerCreateChatHandler = (io, socket) => {
     socket.on('create_chat', async ({partnerId}, callback) => {
         try {
+            const myUserId = socket.user;
+
+            console.log(socket.user);
+            console.log(partnerId)
 
             if (!mongoose.Types.ObjectId.isValid(myUserId) || !mongoose.Types.ObjectId.isValid(partnerId)) {
                 return callback({ success: false, error: 'Некорректные ID участников' });

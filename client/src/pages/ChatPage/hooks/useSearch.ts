@@ -34,11 +34,7 @@ export const useSearch = ({ inputSearchVal, chats, socket }: useSearchProps): us
                     try {
                         const response = await socket.timeout(5000).emitWithAck('global_search_user_by_phone', inputSearchVal);
 
-                        console.log('Ежи ищем по номеру')
-                        console.log(response)
-
                         if (response && (response.status === 200 || response.success)) {
-                            console.log('уе успех')
                             setGlobalSearchResult(response.globalSearchResult)
                         }
                     } catch (err) {

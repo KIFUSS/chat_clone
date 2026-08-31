@@ -4,7 +4,7 @@ export const registerSendMessageHandler = (io, socket) => {
     socket.on('send_message', async (data, callback) => {
         const {message, chatId} = data;
 
-        if (!socket.user.id) {
+        if (!socket.user) {
             callback({
                     status: 500,
                     success: false,
@@ -22,7 +22,7 @@ export const registerSendMessageHandler = (io, socket) => {
 
         try {
             const newMessage = new Message({
-                sender: socket.user.id,
+                sender: socket.user,
                 chatId: chatId,
                 text: message
             })

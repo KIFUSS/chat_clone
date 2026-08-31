@@ -56,9 +56,6 @@ export const useAuthFlow = () => {
 
                 const data = await response.json();
 
-                console.log("[FRONTEND] Что приходит с сервера после верификации по коду:");
-                console.log(data)
-
                 if (!response.ok) {
                     return setError(data.error || 'Неверный код!');
                 }

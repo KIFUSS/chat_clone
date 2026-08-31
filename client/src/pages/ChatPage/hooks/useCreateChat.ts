@@ -14,11 +14,13 @@ export const useCreateChat = ({socket}: useCreateChatProps): useCreateChatReturn
             return;
         } 
 
+        console.log(`[creeateChatHandler]: ${partnerId}`)
+
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await socket?.timeout(5000).emitWithAck('create_chat', partnerId);
+            const response = await socket?.timeout(5000).emitWithAck('create_chat', {partnerId});
             console.log(response)
 
             if (response && response.success) {

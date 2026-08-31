@@ -59,7 +59,7 @@ export interface useCreateChatReturn {
 }
 
 
-export type createChatHandler = (myUserId: string, partnerId: string) => void;
+export type createChatHandler = (partnerId: string) => void;
 
 
 

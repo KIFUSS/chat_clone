@@ -29,7 +29,7 @@ export const registerJoinChatHandler = (io, socket) => {
                 status: 200,
                 success: true,
                 messages: populatedMessages,
-                myId: socket.user.id,
+                myId: socket.user,
             });
 
         } catch (err) {
