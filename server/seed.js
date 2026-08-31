@@ -10,26 +10,30 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Подключено к MongoDB для сидинга...');
 
+    const users = await User.find({});
+
+    console.log(users);
+
     // 1. Очищаем старые чаты и сообщения, чтобы не было битых ID
-    await Chat.deleteMany({});
-    console.log('Старые чаты удалены.');
+    // await Chat.deleteMany({});
+    // console.log('Старые чаты удалены.');
 
     // 2. Находим реальных пользователей из вашей коллекции User
     // Убедитесь, что вы предварительно зарегистрировали хотя бы 2-3 аккаунта через ваш Auth Flow!
-    const users = await User.find().limit(3);
+    // const users = await User.find().limit(3);
 
-    if (users.length < 2) {
-      console.log('❌ Ошибка: Для создания чата нужно зарегистрировать хотя бы 2 пользователей в приложении!');
-      process.exit(1);
-    }
+    // if (users.length < 2) {
+    //   console.log('❌ Ошибка: Для создания чата нужно зарегистрировать хотя бы 2 пользователей в приложении!');
+    //   process.exit(1);
+    // }
 
-    // 3. Создаем тестовый чат между первым и вторым пользователем
-    const testChat = new Chat({
-      participants: [users[0]._id, users[1]._id]
-    });
+    // // 3. Создаем тестовый чат между первым и вторым пользователем
+    // const testChat = new Chat({
+    //   participants: [users[0]._id, users[1]._id]
+    // });
 
-    await testChat.save();
-    console.log(`✅ Успешно создан тестовый чат между ${users[0].name} и ${users[1].name}!`);
+    // await testChat.save();
+    // console.log(`✅ Успешно создан тестовый чат между ${users[0].name} и ${users[1].name}!`);
 
     process.exit(0);
   } catch (err) {

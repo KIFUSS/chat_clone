@@ -14,23 +14,7 @@ export const useChat = () => {
   const [messages, setMessages] = useState<MessageData[]>([]);
   
   // get token for context
-  const {token} = useAuth();
-
-  // const myUserId = useMemo(() => {
-  //   const token = localStorage.getItem('token') || '';
-
-  //   if (!token) return ''
-
-  //   try {
-  //     const decoded = jwtDecode<JwtPayload>(token);
-  //     return decoded.userId; 
-  //   } catch (e) {
-  //     console.error('Ошибка декодирования JWT токена', e);
-  //     return '';
-  //   }
-  // }, [])
-
-  
+  const {token} = useAuth();  
 
   const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
@@ -107,43 +91,9 @@ export const useChat = () => {
     }
   }, [])
 
-  //  const handleCreateChat = async (partnerId: string) => {
-  //   if (!socketRef.current || !myUserId) return;
-
-  //   try {
-  //     const response = await socketRef.current.timeout(5000).emitWithAck('create_chat', {
-  //       myUserId,
-  //       partnerId
-  //     });
-
-  //     if (response && response.success) {
-  //       const chat = response.chat;
-  //       const partner = chat.participants.find((p: any) => p._id !== myUserId);
-        
-  //       const newChatData: ChatData = {
-  //         id: chat._id,
-  //         name: partner?.name || 'Чат',
-  //         avatarText: partner?.avatar || '',
-  //         lastMessage: chat.lastMessage?.text || 'Нет сообщений',
-  //         time: '12:12'
-  //       };
-
-  //       // Если такого чата еще нет в стейте, добавляем его вверх списка
-  //       if (!chats.some(c => c.id === chat._id)) {
-  //         setChats((prev) => [newChatData, ...prev]);
-  //       }
-        
-  //       // Сразу переключаемся на этот чат
-  //       setActiveChatId(chat._id);
-  //     }
-  //   } catch (err) {
-  //     console.error("Ошибка при создании чата:", err);
-  //   }
-  // };
-
   // получение сообщений
   useEffect(() => {
-     if (!activeChatId || activeChatId === '1' || !socketRef.current) return;
+     if (!activeChatId || !socketRef.current) return;
 
     const fetchMessage = async () => {
       try {

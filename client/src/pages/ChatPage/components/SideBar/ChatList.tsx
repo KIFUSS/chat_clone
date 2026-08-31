@@ -24,15 +24,13 @@ export const ChatList: React.FC<ChatListProps> = ({chats, activeChatId, onSelect
 
     return (
         <div className="overflow-y-auto flex-1 p-2 space-y-1">
-            {filteredChats.length === 0 ? 
-                globalSearchResult.map((user) => (
-                    <UserListItem 
-                        key={user._id}
-                        name={user.name}
-                        startChat={createChatHandler}
-                        userData={user}
-                    />
-                ))
+            {filteredChats.length === 0 && globalSearchResult ? 
+                <UserListItem 
+                    key={globalSearchResult._id}
+                    name={globalSearchResult.name}
+                    startChat={createChatHandler}
+                    userData={globalSearchResult}
+                />
             : 
                 filteredChats.map((chat) => (
                     <ChatListItem 

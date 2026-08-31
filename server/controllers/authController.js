@@ -89,10 +89,10 @@ export const verifyCode = async (req, res) => {
 }
 
 export const register = async (req, res) => {
-    const {phone, name} = req.body;
+    const {phone, name, login} = req.body;
     
-    if (!phone || !name.trim()) {
-        return res.status(400).json({error: 'Телефон и имя обязательны для регистрации'});
+    if (!phone || !name || !login) {
+        return res.status(400).json({error: 'Некорректные данные для авторизации'});
     }
 
     try {
@@ -104,12 +104,11 @@ export const register = async (req, res) => {
 
         const newUser = new User({
             phone,
-            name: name.trim()
+            name: name.trim(),
+            login: login.trim(),
         })
 
         await newUser.save();
-
-        console.log(`[backend] Создали нового пользователя: ${name}, ${phone}`);
 
         const token = createToken(newUser._id);
 

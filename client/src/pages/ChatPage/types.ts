@@ -21,6 +21,7 @@ export interface UserDataBackend {
     _id: string;
     phone: string;
     name: string;
+    login: string;
     createdAt: string;
     __v: number;
 }
@@ -71,5 +72,5 @@ export interface useSearchProps {
 
 export interface useSearchReturn {
     filteredChats: ChatData[];
-    globalSearchResult: UserDataBackend[];
+    globalSearchResult: UserDataBackend | null;
 }

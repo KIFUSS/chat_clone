@@ -3,40 +3,69 @@ import type { ChatData, UserDataBackend } from "../types";
 import type { Socket } from "socket.io-client";
 import { checkIsPhone } from "@/utils";
 import type { useSearchProps, useSearchReturn } from "../types";
+import { globalSearchByLogin, globalSearchByPhone } from "./service/searchService";
 
 
 
 
 export const useSearch = ({ inputSearchVal, chats, socket }: useSearchProps): useSearchReturn => {
-    const [globalSearchResult, setGlobalSearchResult] = useState<UserDataBackend[]>([]);
+    const [globalSearchResult, setGlobalSearchResult] = useState<UserDataBackend | null>(null);
     const [filteredChats, setFilteredChats] = useState<ChatData[]>(chats)
 
     useEffect(() => {
         if (inputSearchVal.trim() === "") {
+            console.log(1);
             setFilteredChats(chats);
-            setGlobalSearchResult([]);
+            setGlobalSearchResult(null);
             return;
         }
 
-        if (!checkIsPhone(inputSearchVal)) {
-            const filtered: ChatData[] = chats.filter((chat) =>
-                chat.name.toLowerCase().includes(inputSearchVal.toLowerCase())
-            );
+        if (!checkIsPhone(inputSearchVal) && !inputSearchVal.startsWith("@")) {
+            console.log('2')
+            if (chats.length > 0) {
+                const filtered: ChatData[] = chats.filter((chat) =>
+                    chat.name.toLowerCase().includes(inputSearchVal.toLowerCase())
+                );
 
-            setFilteredChats(filtered);
-            setGlobalSearchResult([]);
-            return;
+                setFilteredChats(filtered);
+                setGlobalSearchResult(null);
+                return;
+            }
+
+            setFilteredChats(chats);
+            setGlobalSearchResult(null);
+            return;            
         }
+
+        console.log(3)
 
         const delayDebounceFn = setTimeout(() => {
             if (socket !== null) {
                 const globalSearchUser = async () => {
                     try {
-                        const response = await socket.timeout(5000).emitWithAck('global_search_user_by_phone', inputSearchVal);
+                        let response;
 
-                        if (response && (response.status === 200 || response.success)) {
-                            setGlobalSearchResult(response.globalSearchResult)
+                        if (inputSearchVal.startsWith("@")) {
+                            console.log('[FRONTEND] START SEARCH BY LOGIN....');
+                            response = await globalSearchByLogin(socket, inputSearchVal);
+                        } else if (checkIsPhone(inputSearchVal)) {
+                            console.log('[FRONTEND] START SEARCH BY PHONE....');
+                            response = await globalSearchByPhone(socket, inputSearchVal);
+                            console.log(response)
                         }
+
+                        if (response && (response.status === 404 && !response.success)) {
+                            // not found
+                            setGlobalSearchResult(null);
+                            setFilteredChats(chats);
+                            return;
+                        }
+
+                        if (response && (response.status === 200 && response.success)) {
+                            setGlobalSearchResult(response.user)
+                            setFilteredChats([]);
+                            return;
+                        } 
                     } catch (err) {
                         console.log("Ошибка глобального поиска : " + err);
                     }

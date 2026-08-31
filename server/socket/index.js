@@ -4,14 +4,10 @@ import { registerSearchHandler } from "./searchHandler.js";
 import { registerSendMessageHandler } from "./sendMessageHandler.js";
 import { registerGetUserChatsHandler } from "./getUserChatsHandler.js";
 import jwt from 'jsonwebtoken'
-import * as cookie from 'cookie';
-
-
 
 export const initSocketManager = (io) => {
     io.use((socket, next) => {
         try {
-            
             const token = socket?.handshake?.auth?.token
 
             if (!token) {
@@ -22,16 +18,12 @@ export const initSocketManager = (io) => {
             socket.user = decoded.userId;
 
             next();
-
         } catch (err) {
             return next(new Error(`Authentication error: Invalid Token: ${err}`));
         }
     })
 
     io.on('connection', (socket) => {
-        console.log(socket.user)
-        console.log(`[backend] Client connected: ${socket.user}`);
-
         registerGetUserChatsHandler(io, socket);
         registerSearchHandler(io, socket);
         registerCreateChatHandler(io, socket);

@@ -39,18 +39,13 @@ export const registerSendMessageHandler = (io, socket) => {
                 senderId: newMessage.sender._id,
             }
 
-            // Отправляет новое сообщение в сокет комнату по айди чата
             socket.to(chatId).emit("receive_message", formattedMessage);
-
-            console.log(`[backend] Сообщение сохранено в бд для чата ${chatId}`);
 
             if (typeof callback === 'function') {
                 callback({status: 200, success: true, message: formattedMessage})
             }
             
         } catch (err) {
-            console.log(err)
-
             if (typeof callback === 'function') {
                 callback({
                     status: 500,

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 
 export const useAuthFlow = () => {
     const navigate = useNavigate();
-
     const {checkAuth} = useAuth();
 
     const [countryCode, setCountryCode] = useState<string>('+7');
@@ -12,6 +11,7 @@ export const useAuthFlow = () => {
     const [step, setStep] = useState<'phone' | 'sms' | 'register'>('phone');
     const [smsCode, setSmsCode] = useState<string>('');
     const [name, setName] = useState<string>('');
+    const [login, setLogin] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
 
     const handleNext = async () => {
@@ -73,13 +73,13 @@ export const useAuthFlow = () => {
         }   
         else if (step === 'register') {
             if (!name.trim()) return setError('Вы не ввели имя!');
+            if (!login.trim()) return setError('Вы не ввели логин!');
 
             try {
-                console.log('Начала регистрации юзера')
                 const response = await fetch("http://localhost:5000/api/auth/register", {
                     method: "POST",
                     headers: {'Content-type': 'application/json'},
-                    body: JSON.stringify({phone: fullPhone, name: name.trim()}),
+                    body: JSON.stringify({phone: fullPhone, name: name.trim(), login: login.trim()}),
                     credentials: 'include',
                 })
 
@@ -108,6 +108,7 @@ export const useAuthFlow = () => {
     step,
     smsCode, setSmsCode,
     name, setName,
+    login, setLogin,
     error, setError, clearError,
     handleNext,
   };

@@ -10,6 +10,7 @@ const AuthPage: React.FC = () => {
     phoneNumber, setPhoneNumber,
     smsCode, setSmsCode,
     name, setName,
+    login, setLogin,
     error, clearError,
     handleNext
   } = useAuthFlow();
@@ -25,8 +26,8 @@ const AuthPage: React.FC = () => {
         )}
         <div className="flex min-h-screen w-full items-center justify-center bg-zinc-950 p-4">
             <div className="w-80 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex flex-col items-center">
-                <div className="w-16 h-16 bg-sky-500 rounded-full flex items-center justify-center mb-6">
-                <span className="text-white font-black text-2xl transform -rotate-12">➔</span>
+                <div className="w-20 h-20 bg-sky-500 rounded-full flex items-center justify-center mb-6">
+                <span className="text-white font-black text-2xl transform p-4">SEND</span>
                 </div>
                 {step === 'phone' && (
                     <>
@@ -48,7 +49,7 @@ const AuthPage: React.FC = () => {
 
                 {step === 'register' && (
                 <>
-                    <RegisterStep value={name} onChange={setName} />
+                    <RegisterStep name={name} setName={setName} login={login} setLogin={setLogin} />
                 </>
                 )}
                 

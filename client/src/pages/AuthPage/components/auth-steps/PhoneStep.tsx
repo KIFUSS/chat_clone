@@ -20,9 +20,9 @@ export const PhoneStep: React.FC<PhoneStepProps> = ({
         <>
             <h1 className="text-xl font-semibold text-zinc-100 mb-2">Ваш телефон</h1>
             <p className="text-xs text-zinc-400 text-center mb-6">
-            Пожалуйста, выберите страну и введите свой номер телефона.
+            Пожалуйста, введите свой номер телефона.
             </p>
-            <CountrySelect value={countryCode} onChange={setCountryCode} />
+            {/* <CountrySelect value={countryCode} onChange={setCountryCode} /> */}
             <PhoneInput value={phoneNumber} onChange={setPhoneNumber} countryCode={countryCode}/>
         </>
     )
