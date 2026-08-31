@@ -19,7 +19,7 @@ export const registerCreateChatHandler = (io, socket) => {
             }
 
             const newChat = new Chat({
-                participants: [myUserId, partnerId]
+                participants: [myUserId, partnerId],
             });
 
             await newChat.save();

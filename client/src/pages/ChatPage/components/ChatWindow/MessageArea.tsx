@@ -20,6 +20,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({messages}) => {
                 {messages.map((msg) => (
                     <MessageBubble 
                         key={msg.id}
+                        id={msg.id}
                         text={msg.text}
                         time={msg.time}
                         isMe={msg.isMe}

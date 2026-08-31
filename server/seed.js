@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import User from './models/User.js'; // Убедитесь в правильности пути к модели User
 import Chat from './models/Chat.js';
 import dotenv from 'dotenv';
+import Message from './models/Message.js';
 
 dotenv.config();
 

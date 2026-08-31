@@ -132,6 +132,8 @@ export const useChat = () => {
         message: inputText.trim(), chatId: activeChatId
       })
 
+      console.log(response)
+
       if (response && (response.status === 200 || response.success)) {
         console.log("[front] Сообщение успешно доставлено через сокет", response.message)
 

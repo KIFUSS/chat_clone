@@ -1,11 +1,11 @@
-import Message from "../models/Message.js";
+import { saveMessage, updateLastMessageForChat, forrmatedMessageForFrontend } from "../service/chatService.js";
 
 export const registerSendMessageHandler = (io, socket) => {
     socket.on('send_message', async (data, callback) => {
         const {message, chatId} = data;
 
         if (!socket.user) {
-            callback({
+            return callback({
                     status: 500,
                     success: false,
                     error: 'Сервер не нашел ваш айди в запросе',
@@ -13,7 +13,7 @@ export const registerSendMessageHandler = (io, socket) => {
         }
 
         if (!message || !chatId) {
-            callback({
+            return callback({
                     status: 500,
                     success: false,
                     error: 'Получены некоректные данные'
@@ -21,25 +21,13 @@ export const registerSendMessageHandler = (io, socket) => {
         }
 
         try {
-            const newMessage = new Message({
-                sender: socket.user,
-                chatId: chatId,
-                text: message
-            })
+            const savedMessage = await saveMessage(socket.user, chatId, message);
+            updateLastMessageForChat(savedMessage._id, chatId);
 
-            await newMessage.save();
-            await newMessage.populate('sender', 'name');
-
-
-            const formattedMessage = {
-                id: newMessage._id,
-                text: newMessage.text,
-                time: new Date(newMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isMe: false,
-                senderId: newMessage.sender._id,
-            }
-
+            const formattedMessage = forrmatedMessageForFrontend(savedMessage);
             socket.to(chatId).emit("receive_message", formattedMessage);
+
+            console.log(formattedMessage)
 
             if (typeof callback === 'function') {
                 callback({status: 200, success: true, message: formattedMessage})
@@ -50,7 +38,7 @@ export const registerSendMessageHandler = (io, socket) => {
                 callback({
                     status: 500,
                     success: false,
-                    error: 'Не удалось сохранить сообщение'
+                    error: `Не удалось сохранить сообщение: ${err}`
                 })
             }
         }
