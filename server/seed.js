@@ -3,6 +3,7 @@ import User from './models/User.js'; // Убедитесь в правильно
 import Chat from './models/Chat.js';
 import dotenv from 'dotenv';
 import Message from './models/Message.js';
+import UserStatus from './models/userStatus.js';
 
 dotenv.config();
 
@@ -11,9 +12,20 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Подключено к MongoDB для сидинга...');
 
-    const users = await User.find({});
+    const users = await UserStatus.find({});
 
     console.log(users);
+
+    
+    // for (const user of users) {
+    //   const userStatusNew = new UserStatus({
+    //     userId: user._id,
+    //     isOnline: false,
+    //     lastActivity: Date.now(),
+    //   })
+
+    //   await userStatusNew.save()
+    // }
 
     // 1. Очищаем старые чаты и сообщения, чтобы не было битых ID
     // await Chat.deleteMany({});

@@ -11,7 +11,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({id, text, time, isM
     return (
         <div key={id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
             <div 
-                className={`max-w-md p-3 shadow-md flex flex-col gap-1 text-sm leading-relaxed
+                className={`max-w-md p-2 shadow-md flex flex-col gap-1 text-sm leading-relaxed 
                 ${isMe 
                     ? 'bg-sky-600 text-white rounded-2xl rounded-tr-none' 
                     : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-2xl rounded-tl-none'

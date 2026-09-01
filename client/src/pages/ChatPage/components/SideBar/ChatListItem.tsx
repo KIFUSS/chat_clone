@@ -24,7 +24,11 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({chat, isActive, onCli
             {/* Текстовый блок карточки */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
-                    <h3 className="text-sm font-semibold text-zinc-200 truncate">{chat.name}</h3>
+                    <div className='flex gap-2 justify-center items-center'>
+                        <h3 className="text-sm font-semibold text-zinc-200 truncate">{chat.name}</h3>
+                        <div className='w-2.5 h-2.5 rounded-full shrink-0 transition-colors duration-300 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'></div> 
+                        {/* bg-zinc-500 */}
+                    </div>
                     <time className="text-xs text-zinc-500 font-light">{chat.time}</time>
                 </div>
                 {/* truncate красиво поставит три точки, если текст сообщения не влезает */}

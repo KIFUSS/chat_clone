@@ -3,7 +3,7 @@ import type { ChatData, UserDataBackend } from "../types";
 import type { Socket } from "socket.io-client";
 import { checkIsPhone } from "@/utils";
 import type { useSearchProps, useSearchReturn } from "../types";
-import { globalSearchByLogin, globalSearchByPhone } from "./service/searchService";
+import { globalSearchByLogin, globalSearchByPhone } from "../service/searchService";
 
 
 

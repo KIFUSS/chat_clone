@@ -11,6 +11,13 @@ export const registerJoinChatHandler = (io, socket) => {
             });
         }
 
+        // Выходит из старых чатов
+        for (const room of socket.rooms) {
+            if (room !== socket.id) {
+                socket.leave(room)
+            }
+        }
+
         socket.join(chatId);
 
         try {

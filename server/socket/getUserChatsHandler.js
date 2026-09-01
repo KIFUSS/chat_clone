@@ -1,5 +1,6 @@
 import Chat from "../models/Chat.js";
 import mongoose from "mongoose";
+import UserStatus from "../models/userStatus.js";
 
 export const registerGetUserChatsHandler = (io, socket) => {
     socket.on('get_user_chats', async (callback) => {
@@ -17,7 +18,12 @@ export const registerGetUserChatsHandler = (io, socket) => {
             const userChats = await Chat.find({ participants: userId })
                 .populate('participants', 'name')
                 .populate('lastMessage')     
-                .sort({ updatedAt: -1 });               
+                .sort({ updatedAt: -1 });     
+
+            // const idsUsersInChat = userChats.map(chat => chat.participants);
+            // const statusUsers = await UserStatus.find({_id: {$in: idsUsersInChat}}).select('isOnline');
+            // console.log(idsUsersInChat)
+                
 
             return callback({ success: true, chats: userChats, myUserId: userId });
         } catch (err) {

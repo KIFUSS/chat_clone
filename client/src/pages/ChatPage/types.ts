@@ -7,6 +7,7 @@ export interface ChatData {
     avatarText: string;
     lastMessage: string;
     time: string;
+    isOnline: boolean;
 }
 
 export interface MessageData {
@@ -74,3 +75,4 @@ export interface useSearchReturn {
     filteredChats: ChatData[];
     globalSearchResult: UserDataBackend | null;
 }
+

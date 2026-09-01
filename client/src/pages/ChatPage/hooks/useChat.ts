@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode'; // Наш импортированный
 import { type BackendMessage, type ChatData, type MessageData, type ResponseFetchMessage, type JwtPayload} from '../types';
 import {io, Socket} from 'socket.io-client'
 import { useAuth } from '@/context/AuthContext';
+import { updateLastMessageForChat } from '../utils/chatHelper';
 
 
 export const useChat = () => {
@@ -19,8 +20,6 @@ export const useChat = () => {
   const currentChat = chats.find((c) => c.id === activeChatId) || chats[0];
 
   useEffect(() => {
-    console.log('[frontend] Подключаемся к сокету...');
-    console.log(token)
     socketRef.current = io("http://localhost:5000", {
       withCredentials: true,
       auth: {
@@ -30,16 +29,13 @@ export const useChat = () => {
     
 
     const loadUsersChats = async () => {
-      console.log('[frontend] Начали запрос чатов пользователя');
 
       if (!socketRef.current || !socketRef.current.connected) return;
 
       try {
-        console.log("[frontend] Статус подключения сокета:", socketRef.current?.connected);
         const response = await socketRef.current.timeout(5000).emitWithAck('get_user_chats');
-        console.log('[frontend] Ответ сервера на запрос чатов пользователя: ');
-        console.log(response);
 
+        console.log(response)
 
         if (response && !response.success) {
           console.log(`[frontend] Ошибка при запросе чатов: ${response.error}`)
@@ -55,6 +51,7 @@ export const useChat = () => {
               avatarText: partner?.avatar || '',
               lastMessage: chat.lastMessage?.text || 'Нет сообщений',
               time: '14:15',
+              isOnline: false
             };
           })
 
@@ -80,8 +77,11 @@ export const useChat = () => {
     });
 
     socketRef.current.on("receive_message", (newMessage: MessageData) => {
-        console.log('[frontend] Начали прослушку новых смс');
         setMessages((prev) => [...prev, newMessage]);
+    })
+
+    socketRef.current.on('user_status_changed', (data) => {
+      console.log(`Пользователь ${data.userId} теперь ${data.isOnline ? 'в сети' : 'не в сети'}`);
     })
 
     
@@ -132,11 +132,7 @@ export const useChat = () => {
         message: inputText.trim(), chatId: activeChatId
       })
 
-      console.log(response)
-
       if (response && (response.status === 200 || response.success)) {
-        console.log("[front] Сообщение успешно доставлено через сокет", response.message)
-
         const clientMessage: MessageData = {
           id: response.message._id,
           text: response.message.text,
@@ -146,7 +142,8 @@ export const useChat = () => {
         };
 
         setMessages((prev) => [...prev, clientMessage]);
-
+        // Обновляем поле последнего сообщения у чата
+        setChats((prevChats) => updateLastMessageForChat(prevChats, activeChatId, response.message.text));
         setInputText('')
       }
     } catch (err) {

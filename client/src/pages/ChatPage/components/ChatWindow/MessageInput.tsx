@@ -1,4 +1,5 @@
 import React from 'react';
+import { Send } from 'lucide-react';
 
 interface MessageInputProps {
   value: string;
@@ -25,12 +26,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({value, onChange, onSe
           onChange={(e) => onChange(e.target.value)}
           className="flex-1 bg-transparent text-sm text-zinc-100 focus:outline-none placeholder-zinc-600 font-normal"
         />
-        <button
-          onClick={onSend} 
-          className="text-sky-500 hover:text-sky-400 font-medium text-sm px-2 cursor-pointer transition-colors select-none"
-        >
-          Отправить
-        </button>
+        <Send
+              onClick={(onSend)}
+              className='cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-sky-500'
+            >
+
+            </Send>
+        
       </div>
     </footer>
   );
