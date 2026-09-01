@@ -1,6 +1,8 @@
 import { Socket } from "socket.io-client";
 
 
+type participants = {_id: string, name: string, isOnline: boolean};
+
 export interface ChatData {
     id: string;
     name: string;
@@ -8,6 +10,7 @@ export interface ChatData {
     lastMessage: string;
     time: string;
     isOnline: boolean;
+    participants: participants[];
 }
 
 export interface MessageData {

@@ -22,6 +22,9 @@ export const ChatList: React.FC<ChatListProps> = ({chats, activeChatId, onSelect
     const {createChatHandler, isLoading, error} = useCreateChat({socket})
 
 
+    console.log(filteredChats)
+
+
     return (
         <div className="overflow-y-auto flex-1 p-2 space-y-1">
             {filteredChats.length === 0 && globalSearchResult ? 

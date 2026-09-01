@@ -51,7 +51,8 @@ export const useChat = () => {
               avatarText: partner?.avatar || '',
               lastMessage: chat.lastMessage?.text || 'Нет сообщений',
               time: '14:15',
-              isOnline: false
+              isOnline: partner.isOnline,
+              participants: chat.participants,
             };
           })
 
@@ -81,6 +82,29 @@ export const useChat = () => {
     })
 
     socketRef.current.on('user_status_changed', (data) => {
+      setChats((prev) => {
+        return prev.map((chat) => {
+          // Проверяем, участвует ли этот пользователь в данном чате
+          const hasParticipant = chat.participants.some(p => p._id === data.userId);
+
+          if (hasParticipant) {
+            console.log('меняем')
+            return {  
+              ...chat,
+              isOnline: data.isOnline,
+              // Обновляем статус конкретного пользователя в массиве участников
+              // participants: chat.participants.map((p) => 
+              //   p._id === data.userId ? { ...p, isOnline: data.isOnline } : p
+              // )
+            };
+          }
+              
+          return chat;
+        });
+      });
+
+
+
       console.log(`Пользователь ${data.userId} теперь ${data.isOnline ? 'в сети' : 'не в сети'}`);
     })
 

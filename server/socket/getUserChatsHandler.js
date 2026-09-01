@@ -18,14 +18,32 @@ export const registerGetUserChatsHandler = (io, socket) => {
             const userChats = await Chat.find({ participants: userId })
                 .populate('participants', 'name')
                 .populate('lastMessage')     
-                .sort({ updatedAt: -1 });     
+                .sort({ updatedAt: -1 })
+                .lean()
 
-            // const idsUsersInChat = userChats.map(chat => chat.participants);
-            // const statusUsers = await UserStatus.find({_id: {$in: idsUsersInChat}}).select('isOnline');
-            // console.log(idsUsersInChat)
-                
+            console.log(userId)
+            const idsUsersInChat = userChats.map(chat => chat.participants.find(partner => !partner._id.equals(userId))._id);
+            const statusUsers = await UserStatus.find({userId: {$in: idsUsersInChat}}).select('isOnline userId');
 
-            return callback({ success: true, chats: userChats, myUserId: userId });
+            const statusMap = statusUsers.reduce((acc, curr) => {
+                acc[curr.userId.toString()] = curr.isOnline;
+                return acc;
+            }, {})
+            
+            const finalChats = userChats.map(chat => {
+                return {
+                    ...chat, 
+                    participants: chat.participants.map(partner => {
+                        const isOnline = statusMap[partner._id.toString()] || false;
+                        return {
+                            ...partner,
+                            isOnline
+                        }
+                    })
+                }
+            })
+
+            return callback({ success: true, chats: finalChats, myUserId: userId });
         } catch (err) {
             console.error(err);
             return callback({ success: false, error: err.message });
