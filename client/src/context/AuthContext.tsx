@@ -1,3 +1,4 @@
+import type { UserDataBackend } from '@/pages/ChatPage/types';
 import React, {createContext, useContext, useEffect, useState } from 'react'
 
 
@@ -6,6 +7,7 @@ interface AuthContextType {
     isLoading: boolean;
     checkAuth: () => Promise<void>,
     token: string | null,
+    user: UserDataBackend | null,
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,6 +16,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
     const [myUserId, setMyUserId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<UserDataBackend | null>(null);
 
     const checkAuth = async () => {
         try {
@@ -22,16 +25,13 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
                 credentials: 'include'  
             })
 
-            console.log("Проверка авторизации в контексте...")
-            console.log(response)
-
             if (response.ok) {
-                console.log('Авторизован')
                 const data = await response.json();
+                
+                setUser(data.user);
                 setMyUserId(data.user.id || data.user._id);
                 setToken(data.token);
             } else {
-                console.log('Не авторизован')
                 setMyUserId(null)
                 setToken(null)
             }
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
     }, [])
 
     return (
-        <AuthContext.Provider value={{myUserId, isLoading, checkAuth, token}}>
+        <AuthContext.Provider value={{myUserId, isLoading, checkAuth, token, user}}>
             {children}
         </AuthContext.Provider>
     )

@@ -8,6 +8,7 @@ import {
   MessageArea, 
   MessageInput 
 } from './components';
+import { InfoUserField } from './components/SideBar/InfoUserField';
 
 
 const ChatPage: React.FC = () => {
@@ -44,6 +45,7 @@ const ChatPage: React.FC = () => {
                         searchQuery={searchQuery}
                         socket={socket}
                     />
+                    <InfoUserField />
                 </aside>
                 <main className="flex-1 h-full bg-zinc-950 flex flex-col">
                     {/* Внедряем декомпозированные блоки окна чата */}
